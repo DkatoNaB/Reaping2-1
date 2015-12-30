@@ -3,6 +3,7 @@
 #include "damage_particles.h"
 #include "renderable_repo.h"
 #include "particle.h"
+#include "particle_engine.h"
 
 using core::DamageTakenEvent;
 
@@ -42,5 +43,6 @@ void DamageDecals::OnDamageTaken( DamageTakenEvent const& Evt )
     Part.mCenter = Evt.Pos + glm::vec2( ( rand() % 10 - 5.f ) / 200.f, ( rand() % 10 - 5.f ) / 200.f );
     Part.mId = mValidIds[rand() % mValidIds.size()];
     mDecalEngine.Add( Part, DecalEngine::GroundParticle );
+    render::ParticleEngine::Get().AddParticle( 0, Evt.Pos );
 }
 

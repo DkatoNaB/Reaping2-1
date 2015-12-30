@@ -7,7 +7,6 @@
 
 namespace render {
 
-bool ParticleSystem::inited = false;
 ParticleSystem::ParticleSystem()
     : mScene( Scene::Get() )
 {
@@ -16,7 +15,6 @@ ParticleSystem::ParticleSystem()
 
 void ParticleSystem::Init()
 {
-    inited = true;
 }
 
 

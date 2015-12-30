@@ -6,12 +6,6 @@
 
 namespace render {
 
-namespace {
-namespace nsParticleSystemInit {
-bool init();
-}
-}
-
 class ParticleSystem : public engine::System
 {
 public:
@@ -22,19 +16,9 @@ protected:
     virtual void Update( double DeltaTime );
 private:
     Scene& mScene;
-    static bool inited;
-    friend bool nsParticleSystemInit::init();
 };
 
-namespace {
-namespace nsParticleSystemInit {
-bool init()
-{
-    return ParticleSystem::inited;
-}
-volatile bool gInited=init();
-}
-}
+INSTANTIATE_SYSTEM( ParticleSystem );
 
 } // namespace render
 

@@ -37,14 +37,4 @@ void SystemFactory::RegisterSystem( std::string const& name )
 
 } // namespace engine
 
-#define REGISTER_SYSTEM( SystemType ) \
-namespace { \
-struct RegisterSystem { \
-RegisterSystem() \
-{ \
-    ::engine::SystemFactory::Get().RegisterSystem<SystemType>( #SystemType ); \
-} \
-} registerSystem; \
-}
-
 #endif//INCLUDED_ENGINE_SYSTEM_FACTORY_H

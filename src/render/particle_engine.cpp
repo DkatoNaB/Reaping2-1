@@ -4,6 +4,7 @@
 #include "vao_base.h"
 #include "font.h"
 #include "i_render.h"
+#include "sprite.h"
 #include <boost/lambda/bind.hpp>
 #include <boost/lambda/lambda.hpp>
 #include <boost/ref.hpp>
@@ -11,10 +12,84 @@
 
 namespace render {
 namespace {
+struct ParticleTemplate
+{
+    Sprite const* Spr;
+    glm::vec4 Color;
+    glm::vec4 ColorVariance;
+    float PosVariance;
+    float AbsSpeed;
+    float AbsSpeedVariance;
+    float MinSpeed;
+    float MaxSpeed;
+    float AbsAcceleration;
+    float AbsAccelerationVariance;
+    float RotationSpeed;
+    float MinRotationSpeed;
+    float MaxRotationSpeed;
+    float RotationSpeedVariance;
+    enum RotationDirection {
+        Rot_P,
+        Rot_N,
+        Rot_Any,
+    };
+    RotationDirection RotDir;
+    RotationDirection RotAccelerationDir;
+    enum SpeedDirection {
+        Towards,
+        Away,
+        Any,
+    };
+    SpeedDirection SpeedDir;
+    SpeedDirection AccelerationDir;
+    float RotationAcceleration;
+    float RotationAccelerationVariance;
+    float Lifetime;
+    float LifetimeVariance;
+    float Radius;
+    float RadiusVariance;
+};
+
+ParticleTemplate const* GetTemplate( int32_t id )
+{
+    static ParticleTemplate tmpl;
+    static bool first = true;
+    if( first )
+    {
+        tmpl.Color = glm::vec4( 1, 0.5, 0.0, 1 );
+        tmpl.ColorVariance = glm::vec4( 0.2, 0.2, 0.1, 0.2 );
+        tmpl.PosVariance = 1;
+        tmpl.AbsSpeed = 1;
+        tmpl.AbsSpeedVariance = 0.2;
+        tmpl.MinSpeed = 0;
+        tmpl.MaxSpeed = 10;
+        tmpl.AbsAcceleration = 0.1;
+        tmpl.AbsAccelerationVariance = 0.1;
+        tmpl.RotationSpeed = 0.0;
+        tmpl.RotationSpeedVariance = 1.0;
+        tmpl.MinRotationSpeed = 0;
+        tmpl.MaxRotationSpeed = 100;
+        tmpl.RotDir = ParticleTemplate::Rot_N;
+        tmpl.RotAccelerationDir = ParticleTemplate::Rot_P;
+        tmpl.SpeedDir = ParticleTemplate::Towards;
+        tmpl.AccelerationDir = ParticleTemplate::Away;
+        tmpl.RotationAcceleration = 0.1;
+        tmpl.RotationAccelerationVariance = 0.01;
+        tmpl.Lifetime = .6;
+        tmpl.LifetimeVariance = 0.45;
+        tmpl.Radius = 40;
+        tmpl.RadiusVariance = 34;
+        tmpl.Spr = (Sprite const*)(1);
+        first = false;
+    }
+    return &tmpl;
+}
+
 struct Particle
 {
-    int32_t TexId;
-    glm::vec4 TexCoords;
+    ParticleTemplate const* Template;
+//    int32_t TexId;
+//    glm::vec4 TexCoords;
     glm::vec4 Color;
     glm::vec2 Pos;
     glm::vec2 Speed;
@@ -23,8 +98,54 @@ struct Particle
     float RotationSpeed;
     float RotationAcceleration;
     float Lifetime;
+    float InitialLifetime;
     float Radius;
+    Particle( ParticleTemplate const* pt, glm::vec2 const& pos );
 };
+Particle::Particle( ParticleTemplate const* ppt, glm::vec2 const& pos )
+    : Template( ppt )
+{
+    ParticleTemplate const& pt = *ppt;
+#define COLOR( channel ) \
+    std::max<double>( 0.0, std::min<double>( 1.0, ( ( pt.Color.channel - pt.ColorVariance.channel / 2. ) + pt.ColorVariance.channel * ( rand() % 100 ) / 100. ) ) )
+    Color = glm::vec4( COLOR( x ), COLOR( y ), COLOR( z ), COLOR( w ) );
+#define INIT( member ) \
+    member = ( pt.member - pt.member##Variance / 2. ) + ( pt.member##Variance * ( rand() % 100 ) / 100. )
+    float AbsAcceleration;
+    INIT( AbsAcceleration );
+    INIT( RotationAcceleration );
+#define ROLL_DIR( dir, opa, opb, val ) \
+    if( pt.dir == ParticleTemplate::opa ) \
+    { \
+        val = - std::abs( val ); \
+    } \
+    else if( pt.dir == ParticleTemplate::opb ) \
+    { \
+        val = std::abs( val ); \
+    } \
+    else if( rand() % 2 == 1 ) \
+    { \
+        val = - val; \
+    }
+    ROLL_DIR( RotAccelerationDir, Rot_N, Rot_P, RotationAcceleration );
+    INIT( RotationSpeed );
+    ROLL_DIR( RotDir, Rot_N, Rot_P, RotationSpeed );
+    float AbsSpeed;
+    INIT( AbsSpeed );
+    ROLL_DIR( SpeedDir, Towards, Away, AbsSpeed );
+    ROLL_DIR( AccelerationDir, Towards, Away, AbsAcceleration );
+    float dir = M_PI * 2 * ( rand() % 100 / 100. );
+    Pos = pos + pt.PosVariance + glm::vec2( cos( dir ), sin( dir ) );
+    Speed = AbsSpeed * glm::normalize( Pos - pos );
+    Acceleration = AbsAcceleration * glm::normalize( Pos - pos );
+    Heading = M_PI * 2. * ( rand() % 101 ) / 100.;
+    INIT( Lifetime );
+    InitialLifetime = Lifetime;
+    INIT( Radius );
+#undef INIT
+#undef COLOR
+#undef ROLL_DIR
+}
 typedef std::vector<Particle> Particles;
 typedef std::vector<glm::vec2> Vec2s_t;
 typedef std::vector<glm::vec4> Vec4s_t;
@@ -45,12 +166,15 @@ bool getNextTextId( Particles::const_iterator& i, Particles::const_iterator e,
     }
     Particle const& p = *i;
     Positions.push_back( p.Pos );
-    TexCoords.push_back( p.TexCoords );
+//        SpritePhase const& Phase = p.Template->Spr->operator()( 100* p.Lifetime / p.InitialLifetime );
+    static Font& Fnt( Font::Get() );
+    SpritePhase const& Phase = Fnt.GetChar( 'a' + rand() % 27 );
+    TexCoords.push_back( glm::vec4( Phase.Left, Phase.Right, Phase.Bottom, Phase.Top ) );
     Colors.push_back( p.Color );
     Headings.push_back( p.Heading );
     Radii.push_back( p.Radius );
     Lifetimes.push_back( p.Lifetime );
-    TexId = p.TexId;
+    TexId = Phase.TexId;
     ++i;
     return true;
 }
@@ -240,20 +364,16 @@ void ParticleEngineImpl::Draw() const
 
 void ParticleEngineImpl::AddParticle( int32_t type, glm::vec2 const& pos )
 {
-    Particle p;
-    p.Color = glm::vec4( ( rand() % 256 ) / 512. + 0.5, ( rand() % 256 ) / 512., 0, ( rand() % 256 ) / 512. );
-    p.Pos = pos;
-    static Font& Fnt( Font::Get() );
-    SpritePhase const& Phase = Fnt.GetChar( 'a' + rand() % 27 );
-    p.TexId = Phase.TexId;
-    p.TexCoords = glm::vec4( Phase.Left, Phase.Right, Phase.Bottom, Phase.Top );
-    p.Lifetime = 10;
-    p.Heading = 0;
-    p.RotationSpeed = 0.1;
-    p.Speed = glm::vec2( rand() % 15 - 7, rand() % 15 - 7 );
-    p.Acceleration = glm::vec2( 0, 0 );
-    p.RotationAcceleration = 0;
-    p.Radius = 15 + rand() % 15;
+    ParticleTemplate const* pt = GetTemplate( type );
+    if( NULL == pt || NULL == pt->Spr )
+    {
+        return;
+    }
+    Particle p( pt, pos );
+    if( p.Lifetime <= 0.0 )
+    {
+        return;
+    }
     mParticles.push_back( p );
 }
 

@@ -5,6 +5,7 @@
 #include "font.h"
 #include "i_render.h"
 #include "sprite.h"
+#include "particle_template_repo.h"
 #include <boost/lambda/bind.hpp>
 #include <boost/lambda/lambda.hpp>
 #include <boost/ref.hpp>
@@ -12,84 +13,9 @@
 
 namespace render {
 namespace {
-struct ParticleTemplate
-{
-    Sprite const* Spr;
-    glm::vec4 Color;
-    glm::vec4 ColorVariance;
-    float PosVariance;
-    float AbsSpeed;
-    float AbsSpeedVariance;
-    float MinSpeed;
-    float MaxSpeed;
-    float AbsAcceleration;
-    float AbsAccelerationVariance;
-    float RotationSpeed;
-    float MinRotationSpeed;
-    float MaxRotationSpeed;
-    float RotationSpeedVariance;
-    enum RotationDirection {
-        Rot_P,
-        Rot_N,
-        Rot_Any,
-    };
-    RotationDirection RotDir;
-    RotationDirection RotAccelerationDir;
-    enum SpeedDirection {
-        Towards,
-        Away,
-        Any,
-    };
-    SpeedDirection SpeedDir;
-    SpeedDirection AccelerationDir;
-    float RotationAcceleration;
-    float RotationAccelerationVariance;
-    float Lifetime;
-    float LifetimeVariance;
-    float Radius;
-    float RadiusVariance;
-};
-
-ParticleTemplate const* GetTemplate( int32_t id )
-{
-    static ParticleTemplate tmpl;
-    static bool first = true;
-    if( first )
-    {
-        tmpl.Color = glm::vec4( 1, 0.5, 0.0, 1 );
-        tmpl.ColorVariance = glm::vec4( 0.2, 0.2, 0.1, 0.2 );
-        tmpl.PosVariance = 1;
-        tmpl.AbsSpeed = 1;
-        tmpl.AbsSpeedVariance = 0.2;
-        tmpl.MinSpeed = 0;
-        tmpl.MaxSpeed = 10;
-        tmpl.AbsAcceleration = 0.1;
-        tmpl.AbsAccelerationVariance = 0.1;
-        tmpl.RotationSpeed = 0.0;
-        tmpl.RotationSpeedVariance = 1.0;
-        tmpl.MinRotationSpeed = 0;
-        tmpl.MaxRotationSpeed = 100;
-        tmpl.RotDir = ParticleTemplate::Rot_N;
-        tmpl.RotAccelerationDir = ParticleTemplate::Rot_P;
-        tmpl.SpeedDir = ParticleTemplate::Towards;
-        tmpl.AccelerationDir = ParticleTemplate::Away;
-        tmpl.RotationAcceleration = 0.1;
-        tmpl.RotationAccelerationVariance = 0.01;
-        tmpl.Lifetime = .6;
-        tmpl.LifetimeVariance = 0.45;
-        tmpl.Radius = 40;
-        tmpl.RadiusVariance = 34;
-        tmpl.Spr = (Sprite const*)(1);
-        first = false;
-    }
-    return &tmpl;
-}
-
 struct Particle
 {
     ParticleTemplate const* Template;
-//    int32_t TexId;
-//    glm::vec4 TexCoords;
     glm::vec4 Color;
     glm::vec2 Pos;
     glm::vec2 Speed;
@@ -166,9 +92,7 @@ bool getNextTextId( Particles::const_iterator& i, Particles::const_iterator e,
     }
     Particle const& p = *i;
     Positions.push_back( p.Pos );
-//        SpritePhase const& Phase = p.Template->Spr->operator()( 100* p.Lifetime / p.InitialLifetime );
-    static Font& Fnt( Font::Get() );
-    SpritePhase const& Phase = Fnt.GetChar( 'a' + rand() % 27 );
+    SpritePhase const& Phase = p.Template->Spr->operator()( 100* p.Lifetime / p.InitialLifetime );
     TexCoords.push_back( glm::vec4( Phase.Left, Phase.Right, Phase.Bottom, Phase.Top ) );
     Colors.push_back( p.Color );
     Headings.push_back( p.Heading );
@@ -364,17 +288,21 @@ void ParticleEngineImpl::Draw() const
 
 void ParticleEngineImpl::AddParticle( int32_t type, glm::vec2 const& pos )
 {
-    ParticleTemplate const* pt = GetTemplate( type );
-    if( NULL == pt || NULL == pt->Spr )
+    static ParticleTemplateRepo& ptr( ParticleTemplateRepo::Get() );
+    ParticleTemplate const& pt = ptr( type );
+    if( NULL == pt.Spr )
     {
         return;
     }
-    Particle p( pt, pos );
-    if( p.Lifetime <= 0.0 )
+    for( int32_t i = 0, e = std::max( 0, ( pt.Num - pt.NumVariance / 2 + ( pt.NumVariance * ( rand() % 100 ) ) / 100 ) ); i != e; ++i )
     {
-        return;
+        Particle p( &pt, pos );
+        if( p.Lifetime <= 0.0 )
+        {
+            continue;
+        }
+        mParticles.push_back( p );
     }
-    mParticles.push_back( p );
 }
 
 ParticleEngine::ParticleEngine()
@@ -398,10 +326,7 @@ void ParticleEngine::Draw() const
 
 void ParticleEngine::AddParticle( int32_t type, glm::vec2 const& pos )
 {
-    for( int i = 0; i < 10; ++ i)
-    {
-        mImpl->AddParticle( type, pos );
-    }
+    mImpl->AddParticle( type, pos );
 }
 
 } // namespace render

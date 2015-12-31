@@ -237,6 +237,15 @@
 			},
             {"name":"fade_out_component",
                 "set":[{"secs_to_end":8.0}]
+            },
+            {
+                "name":"emitter_component",
+                "set": [
+                    {
+                        "frequency": 0.001,
+                        "emit_type": "rocket_alt_flame"
+                    }
+                ]
             }
         ]
     },

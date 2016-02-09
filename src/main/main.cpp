@@ -70,6 +70,7 @@
 #include "network/flag_state_changed_message.h"
 #include "network/fade_out_message.h"
 #include "platform/init.h"
+#include "platform/crash_report.h"
 
 using engine::Engine;
 namespace {
@@ -135,6 +136,7 @@ void ForceReceiveSendMessages()
 
 int main(int argc, char* argv[])
 {
+    platform::CrashReport::Get();
     boost::posix_time::ptime t = boost::posix_time::microsec_clock::local_time();
 
     // convert to int64_t

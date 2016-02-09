@@ -75,7 +75,7 @@
 #include <portable_oarchive.hpp>
 #include <iosfwd>
 #include "core/component_factory.h"
-
+#include "platform/crash_report.h"
 
 using engine::Engine;
 namespace {
@@ -141,6 +141,7 @@ void ForceReceiveSendMessages()
 
 int main(int argc, char* argv[])
 {
+    platform::CrashReport::Get();
     boost::posix_time::ptime t = boost::posix_time::microsec_clock::local_time();
 
     // convert to int64_t

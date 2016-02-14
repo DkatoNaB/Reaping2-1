@@ -12,6 +12,21 @@
 #endif
 
 namespace platform {
+namespace {
+namespace buffers {
+#if ( BOOST_OS_WINDOWS )
+typedef wchar_t char_type;
+#define string_length wstrlen
+#else
+typedef char char_type;
+#define string_length strlen
+#endif
+size_t const MaxNameSize = 1024;
+char_type NameBuffer[ MaxNameSize ] = { 0 };
+size_t DirSize = 0;
+size_t NameSize = 0;
+}
+}
 
 struct CrashReportImpl
 {
@@ -28,6 +43,7 @@ struct CrashReportImpl
     void InitCrashReport( boost::filesystem::path const& path);
     google_breakpad::ExceptionHandler* mHandler;
     bool mReportCrashesToSystem;
+    std::string mCustomData;
 };
 
 #if ( BOOST_OS_WINDOWS )
@@ -43,8 +59,17 @@ bool DumpCallback( const google_breakpad::MinidumpDescriptor &md, void *context,
 bool DumpCallback( const char* _dump_dir, const char* _minidump_id, void *context, bool success)
 #endif
 {
-    L1( "Breakpad dump callback" );
-
+#if ( BOOST_OS_LINUX )
+    char const* _minidump_id = md.path();
+    buffers::NameSize = string_length( _minidump_id ) * sizeof( buffers::char_type );
+    memcpy( buffers::NameBuffer, _minidump_id, buffers::NameSize );
+#else
+    buffers::DirSize = string_length( _dump_dir ) * sizeof( buffers::char_type );
+    buffers::NameSize = string_length( _minidump_id ) * sizeof( buffers::char_type );
+    memcpy( buffers::NameBuffer, _dump_dir, buffers::DirSize);
+    memcpy( buffers::NameBuffer + buffers::DirSize, _minidump_id, buffers::NameSize );
+#endif
+    std::cerr << "Dumped " << buffers::NameBuffer << "\n";
     // NO STACK USE, NO HEAP USE THERE !!!
     return success;
 }
@@ -102,6 +127,11 @@ bool CrashReport::WriteDump()
     bool res = mImpl->mHandler->WriteMinidump();
     L1( "WriteDump %s", ( res ? "success" : "FAILURE" ) );
     return res;
+}
+
+void CrashReport::SetCustomData( std::string const& customData )
+{
+    mImpl->mCustomData = customData;
 }
 
 }

@@ -70,6 +70,7 @@ bool DumpCallback( const char* _dump_dir, const char* _minidump_id, void *contex
     memcpy( buffers::NameBuffer + buffers::DirSize, _minidump_id, buffers::NameSize );
 #endif
     std::cerr << "Dumped " << buffers::NameBuffer << "\n";
+
     // NO STACK USE, NO HEAP USE THERE !!!
     return success;
 }

@@ -51,8 +51,21 @@ target_link_libraries( main audio input platform core render engine network ${GL
 add_precompiled_header(${dirnam} pch.h)
 
 INSTALL(TARGETS ${dirnam}
-	RUNTIME DESTINATION bin
-	LIBRARY DESTINATION lib
-	ARCHIVE DESTINATION lib
-	)
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+    )
+
+add_custom_target(
+    symbols
+    ALL
+    ${CMAKE_COMMAND} -D BINARY=$<TARGET_FILE:main>
+    -D OUTDIR=${CMAKE_BINARY_DIR}/symbols
+    -P ${PROJECT_SOURCE_DIR}/cmake_support/GenerateSymbols.cmake
+    )
+
+add_dependencies(
+    symbols
+    main
+    )
 

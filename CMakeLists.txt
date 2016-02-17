@@ -54,7 +54,7 @@ include_directories(
 	${ENET_INCLUDE_DIR}
 )
 
-
+include( VersionHeader )
 
 add_subdirectory( src )
 add_subdirectory( tools )

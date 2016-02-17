@@ -1,7 +1,10 @@
 #include "crash_report.h"
 #include "log.h"
+#include "process.h"
 #include <boost/predef.h>
 #include <boost/filesystem.hpp>
+#include <boost/assign/list_of.hpp>
+#include <cstdlib>
 
 #if ( BOOST_OS_MACOS )
 #include <client/mac/handler/exception_handler.h>
@@ -16,15 +19,21 @@ namespace {
 namespace buffers {
 #if ( BOOST_OS_WINDOWS )
 typedef wchar_t char_type;
+typedef std::wstring string_type;
 #define string_length wstrlen
 #else
 typedef char char_type;
+typedef std::string string_type;
 #define string_length strlen
 #endif
 size_t const MaxNameSize = 1024;
 char_type NameBuffer[ MaxNameSize ] = { 0 };
 size_t DirSize = 0;
 size_t NameSize = 0;
+string_type Command( "r2uploader" );
+std::vector<string_type> Arguments = boost::assign::list_of(
+        std::string( "PLACEHOLDER_00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" )
+        );
 }
 }
 
@@ -70,8 +79,8 @@ bool DumpCallback( const char* _dump_dir, const char* _minidump_id, void *contex
     memcpy( buffers::NameBuffer + buffers::DirSize, _minidump_id, buffers::NameSize );
 #endif
     std::cerr << "Dumped " << buffers::NameBuffer << "\n";
-
-    // NO STACK USE, NO HEAP USE THERE !!!
+    buffers::Arguments[ 0 ] = buffers::NameBuffer;
+    platform::process::Start( buffers::Command, buffers::Arguments );
     return success;
 }
 
@@ -128,11 +137,6 @@ bool CrashReport::WriteDump()
     bool res = mImpl->mHandler->WriteMinidump();
     L1( "WriteDump %s", ( res ? "success" : "FAILURE" ) );
     return res;
-}
-
-void CrashReport::SetCustomData( std::string const& customData )
-{
-    mImpl->mCustomData = customData;
 }
 
 }

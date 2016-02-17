@@ -11,7 +11,6 @@ class CrashReport : public Singleton<CrashReport>
 {
 public:
     bool WriteDump();
-    void SetCustomData( std::string const& customData );
 private:
     friend class Singleton<CrashReport>;
     CrashReport();

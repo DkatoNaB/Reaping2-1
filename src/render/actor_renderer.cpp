@@ -104,8 +104,9 @@ bool getNextTextId( RenderableSprites_t::const_iterator& i, RenderableSprites_t:
     (*Positions++) = glm::vec2( i->PositionC->GetX(), i->PositionC->GetY() ) + i->RelativePosition;
     (*Headings++) = ( GLfloat )i->PositionC->GetOrientation();
 
-    (*Sizes) = glm::vec2( ( i->CollisionC != nullptr ? i->CollisionC->GetRadius() : 50 )*i->Anim->GetScale() );
+    float const radius = ( i->CollisionC != nullptr ? i->CollisionC->GetRadius() : 50 )*i->Anim->GetScale();
     Opt<render::IVisualBoxMultiplierComponent> const vbox = i->Obj->Get<render::IVisualBoxMultiplierComponent>();
+    (*Sizes) = glm::vec2( radius, radius );
     if( vbox.IsValid() )
     {
         (*Sizes).x *= vbox->GetWidth();
@@ -322,7 +323,7 @@ void ActorRenderer::Draw( RenderFilter filter )
             glVertexAttribPointer( CurrentAttribIndex, 1, GL_FLOAT, GL_FALSE, 0, ( GLvoid* )( mHeadingIndex + sizeof( GLfloat )*Part.Start ) );
             glVertexAttribDivisor( CurrentAttribIndex, 1 );
             ++CurrentAttribIndex;
-            glVertexAttribPointer( CurrentAttribIndex, 1, GL_FLOAT, GL_FALSE, 0, ( GLvoid* )( mSizeIndex + sizeof( glm::vec2 )*Part.Start ) );
+            glVertexAttribPointer( CurrentAttribIndex, 2, GL_FLOAT, GL_FALSE, 0, ( GLvoid* )( mSizeIndex + sizeof( glm::vec2 )*Part.Start ) );
             glVertexAttribDivisor( CurrentAttribIndex, 1 );
             ++CurrentAttribIndex;
             glVertexAttribPointer( CurrentAttribIndex, 4, GL_FLOAT, GL_FALSE, 0, ( GLvoid* )( mColorIndex + sizeof( glm::vec4 )*Part.Start ) );

@@ -3,8 +3,8 @@
 //---global uniforms
 layout(std140) uniform GlobalMatrices
 {
-	mat4 cameraToClipMatrix;
-	mat4 worldToCameraMatrix;
+    mat4 cameraToClipMatrix;
+    mat4 worldToCameraMatrix;
 };
 
 //---shader spec
@@ -16,16 +16,16 @@ layout(location=4) in vec4 color;
 smooth out vec2 inTexCoord;
 smooth out vec4 inColor;
 vec2[4] corners=vec2[4](vec2(-1,-1),
-	vec2(1,-1),
-	vec2(-1,1),
-	vec2(1,1));
+        vec2(1,-1),
+        vec2(-1,1),
+        vec2(1,1));
 void main()
 {
-	inTexCoord=vec2(TexCoord[int(floor(mod(gl_VertexID,2.0)))],TexCoord[2+int(floor(gl_VertexID/2.0))]);
-	inColor=color;
-	vec2 position=corners[gl_VertexID];
-        position *= Size.x;
-//        position.y *= Size.y;
-	mat2 ScaleMatrix=mat2(cos(Heading),sin(Heading),-sin(Heading),cos(Heading));
-	gl_Position=cameraToClipMatrix*worldToCameraMatrix*vec4(ScaleMatrix*position+SpriteCenter,0,1);
+    inTexCoord=vec2(TexCoord[int(floor(mod(gl_VertexID,2.0)))],TexCoord[2+int(floor(gl_VertexID/2.0))]);
+    inColor=color;
+    vec2 position=corners[gl_VertexID];
+    position.x *= Size.x;
+    position.y *= Size.y;
+    mat2 ScaleMatrix=mat2(cos(Heading),sin(Heading),-sin(Heading),cos(Heading));
+    gl_Position=cameraToClipMatrix*worldToCameraMatrix*vec4(ScaleMatrix*position+SpriteCenter,0,1);
 }

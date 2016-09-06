@@ -27,7 +27,6 @@ private:
     };
 
     void Init();
-    VaoBase mVAO;
     RecognizerRepo& mRecognizerRepo;
     ActionRendererFactory& mActionRendererFactory;
     AutoReg mOnActorEvent;
@@ -50,16 +49,26 @@ private:
     ActionRenderersMap_t mActionRenderersMap;
     void OnMouseMoveEvent( const WorldMouseMoveEvent& Event );
     AutoReg mMouseMoveId;
-    size_t mPrevSize;
     double mX;
     double mY;
-    size_t mTexIndex;
-    size_t mPosIndex;
-    size_t mHeadingIndex;
-    size_t mSizeIndex;
-    size_t mColorIndex;
-    render::Counts_t mCounts;
-    RenderableSprites_t mRenderableSprites;
+    struct RenderDesc
+    {
+        VaoBase mVAO;
+        size_t mPrevSize = 0;
+        size_t mTexIndex = 0;
+        size_t mPosIndex = 0;
+        size_t mHeadingIndex = 0;
+        size_t mSizeIndex = 0;
+        size_t mColorIndex = 0;
+        render::Counts_t mCounts;
+        RenderableSprites_t mRenderableSprites;
+    };
+    RenderDesc mDynamicSprites;
+    RenderDesc mStaticSprites;  // TODO take care of dyn. textures
+    int32_t mMaxStaticSpriteUID;
+
+    void Prepare( Scene const& scene, Camera const& camera, double deltaTime, RenderDesc& rd );
+    void Draw( RenderFilter filter, RenderDesc& rd );
 public:
     ActorRenderer();
     ~ActorRenderer();

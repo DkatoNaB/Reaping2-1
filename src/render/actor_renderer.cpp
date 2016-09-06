@@ -135,7 +135,12 @@ void ActorRenderer::Prepare( Scene const& Object, Camera const& camera, double D
         {
             continue;
         }
-        if( !dyn && Object.Get<IHealthComponent>().IsValid() )
+        bool const hasHealth = Object.Get<IHealthComponent>().IsValid();
+        if( dyn && Object.GetGUID() <= mMaxStaticSpriteUID && !hasHealth )
+        {
+            continue;
+        }
+        if( !dyn && hasHealth )
         {
             continue;
         }

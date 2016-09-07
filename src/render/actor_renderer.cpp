@@ -53,7 +53,7 @@ typedef std::vector<GLfloat> Floats_t;
 typedef std::vector<glm::vec4> TexCoords_t;
 typedef std::vector<glm::vec4> Colors_t;
 typedef ActorRenderer::RenderableSprites_t RenderableSprites_t;
-bool isVisible( Actor const& actor, Camera const& camera )
+bool isVisible( Actor const& actor, glm::vec4 const& region )
 {
     Opt<IPositionComponent> const positionC = actor.Get<IPositionComponent>();
     if( !positionC.IsValid() )
@@ -80,7 +80,6 @@ bool isVisible( Actor const& actor, Camera const& camera )
     Opt<ICollisionComponent> const collisionC = actor.Get<ICollisionComponent>();
     // 2.0 multiplier: safety
     float size = ( collisionC.IsValid() ? collisionC->GetRadius() : 50 ) * scale * 2.0;
-    glm::vec4 const& region = camera.VisibleRegion();
     return region.x < positionC->GetX() + size && region.z > positionC->GetX() - size
         && region.y < positionC->GetY() + size && region.w > positionC->GetY() - size;
 }
@@ -106,7 +105,8 @@ bool getNextTextId( RenderableSprites_t::const_iterator& i, RenderableSprites_t:
 
 void ActorRenderer::Prepare( Scene const& Object, Camera const& camera, double DeltaTime )
 {
-    if( 0 == mMaxStaticSpriteUID )
+    static int st = 0;
+    if( (++st % 20) == 0 )
     {
         Prepare( Object, camera, DeltaTime, mStaticSprites );
     }
@@ -123,6 +123,20 @@ void ActorRenderer::Prepare( Scene const& Object, Camera const& camera, double D
         rd.mCounts.clear();
         return;
     }
+    glm::vec4 region = camera.VisibleRegion();
+    if( !dyn )
+    {
+        if( mStaticRegion.x <= region.x && mStaticRegion.z >= region.z
+                && mStaticRegion.y <= region.y && mStaticRegion.w >= region.w )
+        {
+            return;
+        }
+        float w = region.z - region.x;
+        float h = region.w - region.y;
+//        region += glm::vec4( -w, -h, w, h ) / 2.0f;
+        mStaticRegion = region;
+        mMaxStaticSpriteUID = 0;
+    }
     RenderableSprites_t RenderableSprites;
     RenderableSprites.reserve( rd.mRenderableSprites.size() );
     //the template version works well with '=' i just dont know is it really needed, maybe this one is more self explaining
@@ -131,7 +145,7 @@ void ActorRenderer::Prepare( Scene const& Object, Camera const& camera, double D
     for( ActorListFilter<Scene::RenderableActors>::const_iterator i = wrp.begin(), e = wrp.end(); i != e; ++i )
     {
         const Actor& Object = **i;
-        if( dyn && !isVisible( Object, camera ) )
+        if( !isVisible( Object, region ) )
         {
             continue;
         }

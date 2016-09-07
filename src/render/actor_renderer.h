@@ -66,6 +66,7 @@ private:
     RenderDesc mDynamicSprites;
     RenderDesc mStaticSprites;  // TODO take care of dyn. textures
     int32_t mMaxStaticSpriteUID;
+    glm::vec4 mStaticRegion;
 
     void Prepare( Scene const& scene, Camera const& camera, double deltaTime, RenderDesc& rd );
     void Draw( RenderFilter filter, RenderDesc& rd );

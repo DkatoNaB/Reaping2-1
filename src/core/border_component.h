@@ -10,10 +10,10 @@ class BorderComponent : public IBorderComponent
 {
 public:
     BorderComponent();
-    virtual void SetBorders( Borders_t borders );
-    virtual IBorderComponent::Borders_t GetBorders()const;
-    virtual void SetOuterBorders( Borders_t borders );
-    virtual Borders_t GetOuterBorders()const;
+    virtual void SetBorders( Borders_t const& borders );
+    virtual Borders_t const& GetBorders()const;
+    virtual void SetOuterBorders( Borders_t const& borders );
+    virtual Borders_t const& GetOuterBorders()const;
     virtual void Save( Json::Value& component );
     virtual void SetChanged( bool changed );
     virtual bool IsChanged() const;
@@ -21,14 +21,22 @@ public:
     virtual RandomSprites_t const& GetRandomSprites() const;
     virtual void SetSpriteIndex( int32_t spriteIndex );
     virtual int32_t GetSpriteIndex() const;
+    virtual BorderIds_t const& GetBorderIds()const;
+    virtual BorderIds_t const& GetOuterBorderIds()const;
+    virtual BorderPositions_t const& GetOuterBorderPositions()const;
+    void UpdateForActor( Actor* actor );
 protected:
     friend class ComponentFactory;
     Borders_t mBorders;
     Borders_t mOuterBorders;
+    BorderIds_t mBorderIds;
+    BorderIds_t mOuterBorderIds;
+    BorderPositions_t mOuterBorderPositions;
     bool mChanged;
     RandomSprites_t mRandomSprites;
     int32_t mSpriteIndex;
 private:
+    Actor* mActor = nullptr;
 public:
     friend class ::boost::serialization::access;
     template<class Archive>
@@ -53,6 +61,7 @@ public:
     DEFINE_COMPONENT_LOADER_BASE( BorderComponentLoader )
 private:
     virtual void BindValues();
+    virtual void FillProperties( ComponentHolder& holder ) const;
 protected:
     BorderComponentLoader();
     friend class ComponentLoaderFactory;

@@ -4,6 +4,8 @@
 #include "platform/id_storage.h"
 #include "core/i_collision_component.h"
 #include "idle_action_renderer.h"
+#include "engine/engine.h"
+#include "engine/actor_size_system.h"
 
 namespace render {
 
@@ -11,7 +13,6 @@ BorderActionRenderer::BorderActionRenderer( int32_t Id )
     : ActionRenderer( Id )
     , mActionId( AutoId( "body_idle" ) )
     , mActorSize( 1.0 )
-    , mBorderType( BorderType::Get() )
 {
 }
 
@@ -19,11 +20,6 @@ BorderActionRenderer::BorderActionRenderer( int32_t Id )
 void BorderActionRenderer::Init( Actor const& actor )
 {
     mSprites.clear();
-    mBorders.clear();
-    mBorderIds.clear();
-    mOuterBorders.clear();
-    mOuterBorderIds.clear();
-    static BorderType& mBorderType = BorderType::Get();
     static IdStorage& mIdStorage = IdStorage::Get();
     Opt<IBorderComponent> borderC = actor.Get<IBorderComponent>();
     if ( !borderC.IsValid() )
@@ -32,29 +28,9 @@ void BorderActionRenderer::Init( Actor const& actor )
         BOOST_ASSERT( borderC.IsValid() );
         return;
     }
-    std::string actorName;
-    bool const gotId = mIdStorage.GetName( actor.GetId(), actorName );
-    BOOST_ASSERT( gotId );
-    mBorders = borderC->GetBorders();
-    for ( IBorderComponent::Borders_t::iterator i = mBorders.begin(), e = mBorders.end(); i != e; ++i )
-    {
-        std::string borderName;
-        if( mIdStorage.GetName( mBorderType( *i ), borderName ) )
-        {
-            mBorderIds.push_back( 
-                IdleActionRenderer::GetSpriteId( borderC->GetSpriteIndex(), mIdStorage.GetId( actorName + "_" + borderName ) ) );
-        }
-    }
-    mOuterBorders = borderC->GetOuterBorders();
-    for ( IBorderComponent::Borders_t::iterator i = mOuterBorders.begin(), e = mOuterBorders.end(); i != e; ++i )
-    {
-        std::string borderName;
-        if( mIdStorage.GetName( mBorderType( *i ), borderName ) )
-        {
-            mOuterBorderIds.push_back( 
-                IdleActionRenderer::GetSpriteId( borderC->GetSpriteIndex(), mIdStorage.GetId( actorName + "_" + borderName + "_outer") ) );
-        }
-    }
+    auto const& borderIds = borderC->GetBorderIds();
+    auto const& outerBorderIds = borderC->GetOuterBorderIds();
+    auto const& outerBorderPositions = borderC->GetOuterBorderPositions();
     double scale = 1.0;
     SpriteCollection const& Sprites = mRenderableRepo( actor.GetId() );
     Sprite const& Spr = Sprites( mActionId );
@@ -62,46 +38,53 @@ void BorderActionRenderer::Init( Actor const& actor )
     {
         scale = Spr.GetScale() * 1.0;
     }
-    Opt<ICollisionComponent> const collisionC = actor.Get<ICollisionComponent>();
-    mActorSize = ( ( GLfloat )( ( collisionC.IsValid() ? collisionC->GetRadius() : 50 ) * scale ) );
 
-    for ( BorderIds_t::const_iterator i = mBorderIds.begin(), e = mBorderIds.end(); i != e; ++i )
+    static engine::ActorSizeSystem& ass( *engine::Engine::Get().GetSystem<engine::ActorSizeSystem>() );
+    mActorSize = ass.GetSize( actor.GetGUID() ) * scale;
+
+    for ( auto const& borderId : borderIds )
     {
-        SpriteCollection const& Sprites = mRenderableRepo( *i );
+        auto const& id = IdleActionRenderer::GetSpriteId( borderC->GetSpriteIndex(), borderId );
+        SpriteCollection const& Sprites = mRenderableRepo( id );
         Sprite const& Spr = Sprites( mActionId );
         if( Spr.IsValid() )
         {
-            mSprites.emplace_back( glm::vec2(), Spr );
+            SpritePhase const& Phase = Spr( ( int32_t )GetState() );
+            mSprites.emplace_back( glm::vec2(), Spr, Phase );
         }
     }
-    IBorderComponent::Borders_t::const_iterator outer_i = mOuterBorders.begin();
-    for ( BorderIds_t::const_iterator i = mOuterBorderIds.begin(), e = mOuterBorderIds.end(); i != e; ++i, ++outer_i )
+    auto posIterator = outerBorderPositions.begin();
+    for ( auto const& borderId : outerBorderIds )
     {
-        SpriteCollection const& Sprites = mRenderableRepo( *i );
+        auto const& id = IdleActionRenderer::GetSpriteId( borderC->GetSpriteIndex(), borderId );
+        SpriteCollection const& Sprites = mRenderableRepo( id );
         Sprite const& Spr = Sprites( mActionId );
         if( Spr.IsValid() )
         {
-            glm::vec2 pos = mBorderType.GetNeighborDirs()[*outer_i];
-            mSprites.emplace_back( glm::vec2( 2 * pos.x * mActorSize, 2 * pos.y * mActorSize ), Spr );
+            glm::vec2 pos = *posIterator;
+            SpritePhase const& Phase = Spr( ( int32_t )GetState() );
+            mSprites.emplace_back( glm::vec2( 2 * pos.x * mActorSize, 2 * pos.y * mActorSize ), Spr, Phase );
         }
+        ++posIterator;
     }
     mActorColor = GetColor( actor );
+    mRenderableSprites.clear();
+    Opt<IRenderableComponent> renderableC = actor.Get<IRenderableComponent>();
+    for( auto const& data : mSprites )
+    {
+        mRenderableSprites.emplace_back( &actor, renderableC.Get(), mActionId, &data.Spr, &data.Phase, mActorColor );
+        mRenderableSprites.back().RelativePosition = data.RelativePosition;
+    }
 }
 
 
 void BorderActionRenderer::FillRenderableSprites( const Actor& actor, IRenderableComponent const& renderableC, RenderableSprites_t& renderableSprites )
 {
-    if (actor.Get<IBorderComponent>()->IsChanged())
+    if ( actor.Get<IBorderComponent>()->IsChanged())
     {
         Init( actor );
     }
-    for( auto const& data : mSprites )
-    {
-        SpritePhase const& Phase = data.Spr( ( int32_t )GetState() );
-        RenderableSprite renderableSprite( &actor, &renderableC, mActionId, &data.Spr, &Phase, mActorColor );
-        renderableSprite.RelativePosition = data.RelativePosition;
-        renderableSprites.push_back( renderableSprite );
-    }
+    renderableSprites.insert( renderableSprites.end(), mRenderableSprites.begin(), mRenderableSprites.end() );
 }
 
 } // namespace render

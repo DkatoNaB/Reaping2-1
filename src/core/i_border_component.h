@@ -11,10 +11,15 @@ class IBorderComponent : public Component
 public:
     DEFINE_COMPONENT_BASE( IBorderComponent )
     typedef std::vector<BorderType::Type> Borders_t;
-    virtual void SetBorders( Borders_t borders ) = 0;
-    virtual Borders_t GetBorders()const = 0;
-    virtual void SetOuterBorders( Borders_t borders ) = 0;
-    virtual Borders_t GetOuterBorders()const = 0;
+    typedef std::vector<int32_t> BorderIds_t;
+    typedef std::vector<glm::vec2> BorderPositions_t;
+    virtual void SetBorders( Borders_t const& borders ) = 0;
+    virtual Borders_t const& GetBorders()const = 0;
+    virtual BorderIds_t const& GetBorderIds()const = 0;
+    virtual void SetOuterBorders( Borders_t const& borders ) = 0;
+    virtual Borders_t const& GetOuterBorders()const = 0;
+    virtual BorderIds_t const& GetOuterBorderIds()const = 0;
+    virtual BorderPositions_t const& GetOuterBorderPositions()const = 0;
     virtual void SetChanged( bool changed ) = 0;
     virtual bool IsChanged()const = 0;
     typedef std::vector<int32_t> RandomSprites_t; //weight of sprites

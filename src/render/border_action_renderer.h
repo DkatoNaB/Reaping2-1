@@ -13,21 +13,17 @@ namespace render {
 
 class BorderActionRenderer : public ActionRenderer
 {
-    typedef std::vector<int32_t> BorderIds_t;
-    BorderIds_t mBorderIds;
-    BorderIds_t mOuterBorderIds;
     int32_t mActionId;
     double mActorSize;
-    BorderType& mBorderType;
-    IBorderComponent::Borders_t mBorders;
-    IBorderComponent::Borders_t mOuterBorders;
     struct SpriteData {
         glm::vec2 RelativePosition;
         Sprite const& Spr;
-        SpriteData( glm::vec2 const& rp, Sprite const& sp ) : RelativePosition( rp ), Spr( sp ) {}
+        SpritePhase const& Phase;
+        SpriteData( glm::vec2 const& rp, Sprite const& sp, SpritePhase const& p ) : RelativePosition( rp ), Spr( sp ), Phase( p ) {}
     };
     std::vector<SpriteData> mSprites;
     glm::vec4 mActorColor;
+    RenderableSprites_t mRenderableSprites;
 public:
     BorderActionRenderer( int32_t Id );
     virtual void Init( const Actor& actor );

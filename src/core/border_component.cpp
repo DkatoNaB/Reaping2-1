@@ -2,6 +2,7 @@
 #include "platform/id_storage.h"
 #include <portable_iarchive.hpp>
 #include <portable_oarchive.hpp>
+#include "actor.h"
 
 BorderComponent::BorderComponent()
     : mBorders()
@@ -9,12 +10,13 @@ BorderComponent::BorderComponent()
 {
 }
 
-void BorderComponent::SetBorders( Borders_t borders )
+void BorderComponent::SetBorders( Borders_t const& borders )
 {
     mBorders = borders;
+    UpdateForActor( mActor );
 }
 
-IBorderComponent::Borders_t BorderComponent::GetBorders()const
+IBorderComponent::Borders_t const& BorderComponent::GetBorders()const
 {
     return mBorders;
 }
@@ -88,17 +90,85 @@ void BorderComponent::Save( Json::Value& component )
     component["set"] = SettersArr;
 }
 
-void BorderComponent::SetOuterBorders( Borders_t borders )
+void BorderComponent::SetOuterBorders( Borders_t const& borders )
 {
     mOuterBorders = borders;
+    UpdateForActor( mActor );
 }
 
-IBorderComponent::Borders_t BorderComponent::GetOuterBorders() const
+IBorderComponent::Borders_t const& BorderComponent::GetOuterBorders() const
 {
     return mOuterBorders;
 }
 
+IBorderComponent::BorderIds_t const& BorderComponent::GetOuterBorderIds() const
+{
+    return mOuterBorderIds;
+}
 
+IBorderComponent::BorderPositions_t const& BorderComponent::GetOuterBorderPositions() const
+{
+    return mOuterBorderPositions;
+}
+
+IBorderComponent::BorderIds_t const& BorderComponent::GetBorderIds() const
+{
+    return mBorderIds;
+}
+
+void BorderComponent::UpdateForActor( Actor* actor )
+{
+    if( actor != nullptr )
+    {
+        mActor = actor;
+    }
+    if( mActor == nullptr )
+    {
+        return;
+    }
+
+    mBorderIds.clear();
+    mOuterBorderIds.clear();
+    static BorderType& mBorderType = BorderType::Get();
+    static IdStorage& mIdStorage = IdStorage::Get();
+
+    std::string actorName;
+    bool const gotId = mIdStorage.GetName( mActor->GetId(), actorName );
+    BOOST_ASSERT( gotId );
+
+    for ( auto const& border : mBorders )
+    {
+        std::string borderName;
+        if( mIdStorage.GetName( mBorderType( border ), borderName ) )
+        {
+            mBorderIds.push_back( mIdStorage.GetId( actorName + "_" + borderName ) );
+        }
+    }
+    for ( auto const& border : mOuterBorders )
+    {
+        std::string borderName;
+        if( mIdStorage.GetName( mBorderType( border ), borderName ) )
+        {
+            mOuterBorderIds.push_back( mIdStorage.GetId( actorName + "_" + borderName + "_outer") );
+            mOuterBorderPositions.push_back( mBorderType.GetNeighborDirs()[ border ] );
+        }
+    }
+}
+
+
+void BorderComponentLoader::FillProperties( ComponentHolder& holder ) const
+{
+    ComponentLoader<BorderComponent>::FillProperties( holder );
+    Actor* actor = dynamic_cast<Actor*>( &holder );
+    if( actor == nullptr )
+    {
+        return;
+    }
+    Opt<BorderComponent> borderC = actor->Get<BorderComponent>();
+    BOOST_ASSERT( borderC.IsValid() );
+    // set the border ids
+    borderC->UpdateForActor( actor );
+}
 
 void BorderComponentLoader::BindValues()
 {

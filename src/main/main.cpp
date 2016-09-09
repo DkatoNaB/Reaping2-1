@@ -472,6 +472,7 @@ int main( int argc, char* argv[] )
     Eng.AddSystem( AutoId( "show_text_system" ) );
 
     Eng.AddSystem( AutoId( "player_model_system" ) );
+    Eng.AddSystem( AutoId("actor_size_system") );
     if ( programState.mMode != ProgramState::Client )
     {
         Eng.AddSystem( AutoId( "removed_actors_system" ) );

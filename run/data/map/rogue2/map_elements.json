@@ -46,10 +46,10 @@
         {
             "seed":10,
             "cell_size":800,
-            "cell_count":6,
+            "cell_count":10,
             "route":
             {
-                "min_length":14,
+                "min_length":12,
                 "end_chance":30,
                 "chance_increase":30
             },

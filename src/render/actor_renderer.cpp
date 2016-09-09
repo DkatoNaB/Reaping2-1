@@ -13,6 +13,8 @@
 #include "core/program_state.h"
 #include "core/scene.h"
 #include "renderable_repo.h"
+#include "engine/engine.h"
+#include "engine/actor_size_system.h"
 #include <boost/lambda/bind.hpp>
 #include <boost/lambda/lambda.hpp>
 #include <boost/ref.hpp>
@@ -77,9 +79,9 @@ bool isVisible( Actor const& actor, glm::vec4 const& region )
         it = scaleMap.find( actor.GetId() );
     }
     float scale = it->second;
-    Opt<ICollisionComponent> const collisionC = actor.Get<ICollisionComponent>();
     // 2.0 multiplier: safety
-    float size = ( collisionC.IsValid() ? collisionC->GetRadius() : 50 ) * scale * 2.0;
+    static engine::ActorSizeSystem& ass( *engine::Engine::Get().GetSystem<engine::ActorSizeSystem>() );
+    float size = ass.GetSize( actor.GetGUID() ) * scale * 2.0;
     return region.x < positionC->GetX() + size && region.z > positionC->GetX() - size
         && region.y < positionC->GetY() + size && region.w > positionC->GetY() - size;
 }
@@ -106,7 +108,7 @@ bool getNextTextId( RenderableSprites_t::const_iterator& i, RenderableSprites_t:
 void ActorRenderer::Prepare( Scene const& Object, Camera const& camera, double DeltaTime )
 {
     static int st = 0;
-    if( (++st % 20) == 0 )
+//    if( (++st % 20) == 0 )
     {
         Prepare( Object, camera, DeltaTime, mStaticSprites );
     }
@@ -124,6 +126,7 @@ void ActorRenderer::Prepare( Scene const& Object, Camera const& camera, double D
         return;
     }
     glm::vec4 region = camera.VisibleRegion();
+    size_t all = 0, rendered = 0;
     if( !dyn )
     {
         if( mStaticRegion.x <= region.x && mStaticRegion.z >= region.z
@@ -133,7 +136,7 @@ void ActorRenderer::Prepare( Scene const& Object, Camera const& camera, double D
         }
         float w = region.z - region.x;
         float h = region.w - region.y;
-//        region += glm::vec4( -w, -h, w, h ) / 2.0f;
+        region += glm::vec4( -w, -h, w, h );
         mStaticRegion = region;
         mMaxStaticSpriteUID = 0;
     }
@@ -144,6 +147,7 @@ void ActorRenderer::Prepare( Scene const& Object, Camera const& camera, double D
     int32_t maxGUID = 0;
     for( ActorListFilter<Scene::RenderableActors>::const_iterator i = wrp.begin(), e = wrp.end(); i != e; ++i )
     {
+        ++all;
         const Actor& Object = **i;
         if( !isVisible( Object, region ) )
         {
@@ -163,6 +167,7 @@ void ActorRenderer::Prepare( Scene const& Object, Camera const& camera, double D
         {
             continue;
         }
+        ++rendered;
         if( maxGUID < Object.GetGUID() )
         {
             maxGUID = Object.GetGUID();
@@ -286,7 +291,12 @@ void ActorRenderer::Prepare( Scene const& Object, Camera const& camera, double D
 
     if( !dyn )
     {
+        std::cerr << "static size: " << rd.mPrevSize << " " << all << " " << rendered << " " << all - rendered << "\n";
         mMaxStaticSpriteUID = maxGUID;
+    }
+    else
+    {
+        std::cerr << "dynamic size: " << rd.mPrevSize << " " << all << " " << rendered << " " << all - rendered << "\n";
     }
 }
 
@@ -339,6 +349,7 @@ void ActorRenderer::Draw( RenderFilter filter, RenderDesc& rd )
     ShaderMgr.UploadData( "spriteTexture", GLuint( 1 ) );
     glActiveTexture( GL_TEXTURE0 + 1 );
     GLuint CurrentAttribIndex = 0;
+    size_t numdraw = 0;
     for( render::Counts_t::const_iterator i = rd.mCounts.begin(), e = rd.mCounts.end(); i != e; ++i )
     {
         render::CountByTexId const& BigPart = *i;
@@ -363,8 +374,10 @@ void ActorRenderer::Draw( RenderFilter filter, RenderDesc& rd )
             glVertexAttribPointer( CurrentAttribIndex, 4, GL_FLOAT, GL_FALSE, 0, ( GLvoid* )( rd.mColorIndex + sizeof( glm::vec4 )*Part.Start ) );
             glVertexAttribDivisor( CurrentAttribIndex, 1 );
             glDrawArraysInstanced( GL_TRIANGLE_STRIP, 0, 4, Part.Count );
+            ++numdraw;
         }
     }
+    std::cerr << "numdraw calls " << (&rd == &mStaticSprites ) << " : " << numdraw << "\n";
     glActiveTexture( GL_TEXTURE0 );
     rd.mVAO.Unbind();
 }

@@ -32,6 +32,8 @@ private:
     ActionRendererFactory& mActionRendererFactory;
     AutoReg mOnActorEvent;
     void OnActorEvent( ActorEvent const& Evt );
+    typedef std::vector<Opt<Actor> > OptActors;
+    RenderableSprites_t CollectSprites( int id, int max, OptActors const& wrp, Camera const& camera, double DeltaTime );
 
     struct FindActionRenderer
     {

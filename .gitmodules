@@ -1,0 +1,3 @@
+[submodule "deps/ctpl"]
+	path = deps/ctpl
+	url = https://github.com/Reaping2/CTPL.git

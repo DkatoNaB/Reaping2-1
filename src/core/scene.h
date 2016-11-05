@@ -91,15 +91,15 @@ public:
         mE = actorlist.end();
         mSize = actorlist.size();
     }
-    const_iterator begin()
+    const_iterator begin() const
     {
         return mI;
     }
-    const_iterator end()
+    const_iterator end() const
     {
         return mE;
     }
-    size_t size()
+    size_t size() const
     {
         return mSize;
     }
@@ -120,15 +120,15 @@ public:
         boost::tie( mI, mE ) = actorlist.get<1>().equal_range( boost::make_tuple( true ) );
         mSize = std::distance( mI, mE );
     }
-    const_iterator begin()
+    const_iterator begin() const
     {
         return mI;
     }
-    const_iterator end()
+    const_iterator end() const
     {
         return mE;
     }
-    size_t size()
+    size_t size() const
     {
         return mSize;
     }
@@ -149,15 +149,15 @@ public:
         boost::tie( mI, mE ) = actorlist.get<2>().equal_range( boost::make_tuple( int32_t( collisionClass ) ) );
         mSize = std::distance( mI, mE );
     }
-    const_iterator begin()
+    const_iterator begin() const
     {
         return mI;
     }
-    const_iterator end()
+    const_iterator end() const
     {
         return mE;
     }
-    size_t size()
+    size_t size() const
     {
         return mSize;
     }

@@ -127,6 +127,7 @@ namespace {
 void InitMessageOrder()
 {
     int32_t type;
+    (void)type;
     type = network::ClientIdMessage::GetType_static();
     type = network::MyNameMessage::GetType_static();
     type = network::LifecycleMessage::GetType_static();

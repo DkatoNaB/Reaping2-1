@@ -17,6 +17,12 @@
 #include <boost/lambda/bind.hpp>
 #include <boost/lambda/lambda.hpp>
 #include <boost/ref.hpp>
+#include <boost/thread/shared_mutex.hpp>
+#include <atomic>
+#include <thread>
+#include <future>
+#include <chrono>
+
 
 void ActorRenderer::Init()
 {
@@ -75,9 +81,16 @@ bool isVisible( Actor const& actor, Camera const& camera )
         return false;
     }
     static std::map<int32_t, float> scaleMap;
+    // shared_mutex
+#if 0
     auto it = scaleMap.find( actor.GetId() );
+    static boost::shared_mutex mtx;
+    boost::shared_lock<boost::shared_mutex> reader( mtx );
     if( scaleMap.end() == it )
     {
+        boost::upgrade_lock<boost::shared_mutex> writer( mtx );
+        boost::upgrade_to_unique_lock<boost::shared_mutex> exclusive( writer );
+        // exclusive lock
         float& f = scaleMap[ actor.GetId() ];
         static RenderableRepo& renderables( RenderableRepo::Get() );
         SpriteCollection const& Sprites = renderables( actor.GetId() );
@@ -91,6 +104,9 @@ bool isVisible( Actor const& actor, Camera const& camera )
         it = scaleMap.find( actor.GetId() );
     }
     float scale = it->second;
+#else
+    float scale = 1.0;
+#endif
     Opt<ICollisionComponent> const collisionC = actor.Get<ICollisionComponent>();
     glm::vec2 const& visMulti = visMultiplier( actor );
     float vmult = std::max<float>( visMulti.x, visMulti.y );
@@ -100,6 +116,7 @@ bool isVisible( Actor const& actor, Camera const& camera )
     return region.x < positionC->GetX() + size && region.z > positionC->GetX() - size
         && region.y < positionC->GetY() + size && region.w > positionC->GetY() - size;
 }
+
 bool getNextTextId( RenderableSprites_t::const_iterator& i, RenderableSprites_t::const_iterator e,
                     glm::vec2*& Positions, GLfloat*& Headings, glm::vec4*& TexCoords, glm::vec2*& Sizes, glm::vec4*& Colors,
                     GLuint& TexId )
@@ -123,20 +140,15 @@ bool getNextTextId( RenderableSprites_t::const_iterator& i, RenderableSprites_t:
 }
 }
 
-void ActorRenderer::Prepare( Scene const& Object, Camera const& camera, double DeltaTime )
+RenderableSprites_t ActorRenderer::CollectSprites( int id, int max, OptActors const& wrp, Camera const& camera, double DeltaTime )
 {
-    ActorList_t const& Lst = Object.GetActors();
-    if( Lst.empty() )
-    {
-        mRenderableSprites.clear(); // renderable sprites still can contain obsolete sprites, so render nothing instead of invalid object
-        mCounts.clear();
-        return;
-    }
     RenderableSprites_t RenderableSprites;
-    RenderableSprites.reserve( mRenderableSprites.size() );
-    //the template version works well with '=' i just dont know is it really needed, maybe this one is more self explaining
-    ActorListFilter<Scene::RenderableActors> wrp( Lst ); //=Object.GetActors<Scene::RenderableComponents>();
-    for( ActorListFilter<Scene::RenderableActors>::const_iterator i = wrp.begin(), e = wrp.end(); i != e; ++i )
+
+    int step = wrp.size() / max;
+    int start = id * step;
+    int end = ( id < max - 1 ) ? ( ( id + 1 ) * step ) : wrp.size();
+    auto i = wrp.begin() + start, e = wrp.begin() + end;
+    for( ; i != e; ++i )
     {
         const Actor& Object = **i;
         if( !isVisible( Object, camera ) )
@@ -147,7 +159,7 @@ void ActorRenderer::Prepare( Scene const& Object, Camera const& camera, double D
         if( nullptr == recogptr )
         {
             continue;
-        }
+        };
         Opt<IRenderableComponent> renderableC( Object.Get<IRenderableComponent>() );
         auto const& recognizers = *recogptr;
         RecognizerRepo::ExcludedRecognizers_t excluded;
@@ -194,6 +206,38 @@ void ActorRenderer::Prepare( Scene const& Object, Camera const& camera, double D
             actionRenderer.FillRenderableSprites( Object, *renderableC.Get(), RenderableSprites );
             actionRenderer.Update( DeltaTime );
         }
+    }
+    return RenderableSprites;
+}
+
+void ActorRenderer::Prepare( Scene const& Object, Camera const& camera, double DeltaTime )
+{
+    ActorList_t const& Lst = Object.GetActors();
+    if( Lst.empty() )
+    {
+        mRenderableSprites.clear(); // renderable sprites still can contain obsolete sprites, so render nothing instead of invalid object
+        mCounts.clear();
+        return;
+    }
+    RenderableSprites_t RenderableSprites;
+    RenderableSprites.reserve( mRenderableSprites.size() );
+    //the template version works well with '=' i just dont know is it really needed, maybe this one is more self explaining
+    ActorListFilter<Scene::RenderableActors> wrp( Lst ); //=Object.GetActors<Scene::RenderableComponents>();
+    // todo: do it in thread pool!
+    OptActors wrp2( wrp.begin(), wrp.end() );
+    std::vector<std::future<RenderableSprites_t> > jobs;
+
+    for( int i = 0; i != 8; ++i )
+    {
+        jobs.push_back(
+                std::async( &ActorRenderer::CollectSprites, this, i, 8, wrp2, camera, DeltaTime )
+                );
+    }
+
+    for( auto& f : jobs )
+    {
+        auto const& c = f.get();
+        RenderableSprites.insert( RenderableSprites.end(), c.begin(), c.end() );
     }
 
     std::swap( RenderableSprites, mRenderableSprites );

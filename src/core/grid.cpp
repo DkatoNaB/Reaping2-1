@@ -18,8 +18,12 @@ const uint32_t Grid::Collisions[] =
     1 << CollisionClass::Player | 1 << CollisionClass::Flag, // flag
 };
 
-PossibleCollisions_t Grid::GetPossibleCollisions()const
+PossibleCollisions_t const& Grid::GetPossibleCollisions()
 {
+    if( mDirtyCells.empty() )
+    {
+        return mPossibleCollisions;
+    }
     PossibleCollisions_t PossibleCollisions;
     for( Cells_t::const_iterator i = mCells.begin(), e = mCells.end(); i != e; ++i )
     {
@@ -52,7 +56,9 @@ PossibleCollisions_t Grid::GetPossibleCollisions()const
             }
         }
     }
-    return PossibleCollisions;
+    mDirtyCells.clear();
+    std::swap( mPossibleCollisions, PossibleCollisions );
+    return mPossibleCollisions;
 }
 
 void Grid::Build( glm::vec4 const& Dimensions, float CellSize )
@@ -87,17 +93,31 @@ void Grid::AddActor( Actor* A, double Dt, Opt<ICollisionComponent> collisionC )
         auto& actors = cell->mActors[ CC ];
         actors.erase( std::remove( actors.begin(), actors.end(), A ), actors.end() );
     }
-    cells.clear();
+    std::vector<Cell*> oldCells;
+    {
+        using namespace std;
+        swap( cells, oldCells );
+    }
     size_t const NumCells = mCells.size();
     if( NumCells == 0 )
     {
         assert( false );
+        if( oldCells != cells )
+        {
+            mDirtyCells.insert( mDirtyCells.end(), oldCells.begin(), oldCells.end() );
+            mDirtyCells.insert( mDirtyCells.end(), cells.begin(), cells.end() );
+        }
         return;
     }
     else if( NumCells == 1 )
     {
         mCells[0].mActors[CC].push_back( A );
         cells.push_back( &mCells[0] );
+        if( oldCells != cells )
+        {
+            mDirtyCells.insert( mDirtyCells.end(), oldCells.begin(), oldCells.end() );
+            mDirtyCells.insert( mDirtyCells.end(), cells.begin(), cells.end() );
+        }
         return;
     }
     glm::vec4 const& ActorDim = Box( *A, Dt );
@@ -114,6 +134,11 @@ void Grid::AddActor( Actor* A, double Dt, Opt<ICollisionComponent> collisionC )
             cell.mActors[CC].push_back( A );
             cells.push_back( &cell );
         }
+    }
+    if( oldCells != cells )
+    {
+        mDirtyCells.insert( mDirtyCells.end(), oldCells.begin(), oldCells.end() );
+        mDirtyCells.insert( mDirtyCells.end(), cells.begin(), cells.end() );
     }
 }
 
@@ -153,6 +178,7 @@ glm::vec4 Grid::Box( Actor const& Obj, double Dt )const
 void Grid::RemoveActor( Actor* A )
 {
     auto& cells = mActorInCell[ A ];
+    mDirtyCells.insert( mDirtyCells.end(), cells.begin(), cells.end() );
     for( auto& cell : cells )
     {
         for( auto& actors : cell->mActors )

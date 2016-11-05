@@ -25,7 +25,7 @@ public:
     void Build( glm::vec4 const& Dimensions, float CellSize );
     void AddActor( Actor* A, double Dt, Opt<ICollisionComponent> collisionC );
     void RemoveActor( Actor* A );
-    PossibleCollisions_t GetPossibleCollisions()const;
+    PossibleCollisions_t const& GetPossibleCollisions();
 private:
     static const uint32_t Collisions[];
     typedef std::vector<Actor*> Actors_t;
@@ -40,6 +40,8 @@ private:
     size_t mDimY;
     glm::vec2 mMin;
     Cells_t mCells;
+    PossibleCollisions_t mPossibleCollisions;
+    std::vector<Cell*> mDirtyCells;
     glm::vec4 Box( Actor const& Obj, double Dt )const;
 };
 

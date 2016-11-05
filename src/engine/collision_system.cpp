@@ -5,6 +5,10 @@
 #include "core/collision_model.h"
 #include "core/i_position_component.h"
 #include "core/i_move_component.h"
+#include <atomic>
+#include <thread>
+#include <future>
+#include <chrono>
 
 namespace engine {
 
@@ -46,11 +50,42 @@ void CollisionSystem::OnActorEvent( ActorEvent const& Evt )
     }
 }
 
+namespace {
+typedef std::vector<CollPair> CollVec;
+CollVec collectCollisions( int id, int max, CollVec const& PossibleCollisions, CollisionStore const& mCollisionStore, double DeltaTime )
+{
+    CollVec rv;
+    int step = PossibleCollisions.size() / max;
+    int start = id * step;
+    int end = ( id < max - 1 ) ? ( ( id + 1 ) * step ) : PossibleCollisions.size();
+    auto i = PossibleCollisions.begin(), e = i;
+    i += start;
+    e += end;
+    for( ; i != e; ++i )
+    {
+        Actor& A = *( i->A1 );
+        Actor& B = *( i->A2 );
+        Opt<ICollisionComponent> ACollisionC = A.Get<ICollisionComponent>();
+        Opt<ICollisionComponent> BCollisionC = B.Get<ICollisionComponent>();
+        BOOST_ASSERT( ACollisionC.IsValid() && BCollisionC.IsValid() ); //TODO: here this one should be true
+
+        CollisionModel const& CollModel = mCollisionStore.GetCollisionModel( ACollisionC->GetCollisionClass(), BCollisionC->GetCollisionClass() );
+        if( !CollModel.AreActorsColliding( A, B, DeltaTime ) )
+        {
+            continue;
+        }
+        rv.push_back( *i );
+    }
+    return rv;
+}
+}
+
 void CollisionSystem::Update( double DeltaTime )
 {
     mUpdateTimer.Log( "start collision" );
     mPerfTimer.Log( "pre build grid" );
     std::vector<std::pair<Opt<CollisionSubSystem>, Actor*>> collisionAndActors;
+    // todo: thread pool ( clipscene ), lowpri
     for (auto actor : mScene.GetActorsFromMap( GetType_static() ))
     {
         Opt<ICollisionComponent> collisionC = actor->Get<ICollisionComponent>();
@@ -66,20 +101,32 @@ void CollisionSystem::Update( double DeltaTime )
         }
     }
     mPerfTimer.Log( "post build grid" );
-    PossibleCollisions_t const& PossibleCollisions = mCollisionGrid.GetPossibleCollisions();
-    for( PossibleCollisions_t::const_iterator i = PossibleCollisions.begin(), e = PossibleCollisions.end(); i != e; ++i )
+    PossibleCollisions_t const& PossibleCollisionsSet = mCollisionGrid.GetPossibleCollisions();
+    CollVec PossibleCollisions( PossibleCollisionsSet.begin(),
+            PossibleCollisionsSet.end() );
+    // todo: thread pool until ->Collide ( only the detection! )
+    std::vector<std::future<CollVec> > ActualCollisions;
+
+    for( int i = 0; i != 4; ++i )
+    {
+        ActualCollisions.push_back(
+                std::async( collectCollisions, i, 4, PossibleCollisions, mCollisionStore, DeltaTime )
+                );
+    }
+    CollVec colls;
+    for( auto& f : ActualCollisions )
+    {
+        auto const& c = f.get();
+        colls.insert( colls.end(), c.begin(), c.end() );
+    }
+
+    for( auto i = colls.begin(), e = colls.end(); i != e; ++i )
     {
         Actor& A = *( i->A1 );
         Actor& B = *( i->A2 );
         Opt<ICollisionComponent> ACollisionC = A.Get<ICollisionComponent>();
         Opt<ICollisionComponent> BCollisionC = B.Get<ICollisionComponent>();
-        BOOST_ASSERT( ACollisionC.IsValid() && BCollisionC.IsValid() ); //TODO: here this one should be true
 
-        CollisionModel const& CollModel = mCollisionStore.GetCollisionModel( ACollisionC->GetCollisionClass(), BCollisionC->GetCollisionClass() );
-        if( !CollModel.AreActorsColliding( A, B, DeltaTime ) )
-        {
-            continue;
-        }
         //TODO: needs optimization, maybe a template parameter for SubSystemHolder to subsystem would do
         Opt<CollisionSubSystem> ACollisionSS = GetCollisionSubSystem( ACollisionC->GetId() );
         if ( ACollisionSS.IsValid() )
@@ -93,6 +140,7 @@ void CollisionSystem::Update( double DeltaTime )
         }
     }
     mPerfTimer.Log( "post collide" );
+    // todo thread pool
     for (auto& collAndActor : collisionAndActors)
     {
         collAndActor.first->Update( *collAndActor.second, DeltaTime );

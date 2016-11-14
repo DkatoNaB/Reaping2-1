@@ -14,6 +14,7 @@
 #include "core/scene.h"
 #include "renderable_repo.h"
 #include "i_visual_box_multiplier_component.h"
+#include "sprite_phase_cache.h"
 #include <boost/lambda/bind.hpp>
 #include <boost/lambda/lambda.hpp>
 #include <boost/ref.hpp>
@@ -107,6 +108,10 @@ bool getNextTextId( RenderableSprites_t::const_iterator& i, RenderableSprites_t:
     if( i == e )
     {
         return false;
+    }
+    {   // move to cache
+        static render::SpritePhaseCache& cache( render::SpritePhaseCache::Get() );
+        cache.Request( *i->Spr );
     }
     TexId = i->Spr->TexId;
     (*Positions++) = glm::vec2( i->PositionC->GetX(), i->PositionC->GetY() ) + i->RelativePosition;

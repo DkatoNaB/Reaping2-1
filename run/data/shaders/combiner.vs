@@ -8,11 +8,11 @@ layout(std140) uniform GlobalMatrices
 };
 
 //---shader spec
-layout(location=0) in vec2 position;
-layout(location=1) in vec2 texcoord;
+layout(location=0) in vec2 texcoord;
+layout(location=1) in vec2 position;
 smooth out vec2 inTexCoord;
 void main()
 {
     inTexCoord=texcoord;
-    gl_Position=vec4(position,0,1);
+    gl_Position=vec4( 2 * ( position - vec2( 0.5, 0.5 ) ) ,0,1);
 }

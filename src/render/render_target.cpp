@@ -66,6 +66,11 @@ void RenderTarget::SetTargetTexture( uint32_t id, glm::vec2 const& size )
 
 void RenderTarget::SelectTargetTexture( uint32_t id ) const
 {
+    if( id == ScreenId )
+    {
+        SetTargetScreen();
+        return;
+    }
     TargetTexture const& tgt = mTargets.at( id );
     glBindFramebuffer( GL_FRAMEBUFFER, tgt.FramebufferId );
     glBindRenderbuffer( GL_RENDERBUFFER, tgt.DepthBufferId );
@@ -76,7 +81,7 @@ void RenderTarget::SelectTargetTexture( uint32_t id ) const
     mCurrentId = id;
 }
 
-void RenderTarget::SetTargetScreen()
+void RenderTarget::SetTargetScreen() const
 {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glClearColor( 0, 0, 0, 0);

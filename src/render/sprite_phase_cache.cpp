@@ -11,7 +11,7 @@ SpritePhaseCache::SpritePhaseCache()
     mTarget = rt.GetFreeId();
     uint32_t current = rt.GetCurrentTarget();
     mTargetSize = rt.GetMaxTextureSize();
-    mTargetSize = glm::vec2(512,512);
+//    mTargetSize = glm::vec2(512,512);
     mRowSize = std::floor( mTargetSize.x / mMaxCellSize );
     L1( "Texture size: %d x %d\n", (int)mTargetSize.x, (int)mTargetSize.y );
     rt.SetTargetTexture( mTarget, mTargetSize );
@@ -161,9 +161,9 @@ void SpritePhaseCache::ProcessPending()
                 mutablePhase.Top );
 
         mutablePhase.Left = freeRegion.x;
-        mutablePhase.Top = freeRegion.y;
+        mutablePhase.Bottom = freeRegion.y;
         mutablePhase.Right = freeRegion.z;
-        mutablePhase.Bottom = freeRegion.w;
+        mutablePhase.Top = freeRegion.w;
 
         mutablePhase.TexId = mTargetTexId;
         L1( "spr post: %d %f %f %f %f\n",

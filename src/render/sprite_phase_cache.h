@@ -16,10 +16,15 @@ namespace render {
 class SpritePhaseCache : public platform::Singleton<SpritePhaseCache>
 {
     std::map<SpritePhase const*, SpritePhase> mOriginal;
-    std::set<SpritePhase const*> mPending;
+    struct ExtData
+    {
+        glm::vec4 freeRegion;
+        float size;
+    };
+    std::map<SpritePhase const*,ExtData> mPending;
     uint32_t mTarget;
     glm::vec2 mTargetSize;
-    static const int mMaxCellSize = 256;
+    static const int mMaxCellSize = 128;
     int mCacheIndex = 0;
     int mRowSize = 0;
     VaoBase mVAO;
@@ -30,7 +35,7 @@ class SpritePhaseCache : public platform::Singleton<SpritePhaseCache>
 public:
     GLuint mTargetTexId;
     void ProcessPending();
-    void Request( SpritePhase const& sprphase );
+    void Request( SpritePhase const& sprphase, float size );
 };
 
 }

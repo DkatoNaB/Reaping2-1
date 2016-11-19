@@ -109,20 +109,21 @@ bool getNextTextId( RenderableSprites_t::const_iterator& i, RenderableSprites_t:
     {
         return false;
     }
-    {   // move to cache
-        static render::SpritePhaseCache& cache( render::SpritePhaseCache::Get() );
-        cache.Request( *i->Spr );
-    }
     TexId = i->Spr->TexId;
     (*Positions++) = glm::vec2( i->PositionC->GetX(), i->PositionC->GetY() ) + i->RelativePosition;
     (*Headings++) = ( GLfloat )i->PositionC->GetOrientation();
 
     float const radius = ( i->CollisionC != nullptr ? i->CollisionC->GetRadius() : 50 )*i->Anim->GetScale();
-    (*Sizes) = radius * visMultiplier( *(i->Obj) );
+    auto const size = radius * visMultiplier( *(i->Obj) );
+    (*Sizes) = size;
     ++Sizes;
 
     (*TexCoords++) = glm::vec4( i->Spr->Left, i->Spr->Right, i->Spr->Bottom, i->Spr->Top );
     (*Colors++) = i->Color;
+    {   // move to cache
+        static render::SpritePhaseCache& cache( render::SpritePhaseCache::Get() );
+        cache.Request( *i->Spr, std::max( size.x, size.y ) );
+    }
     ++i;
     return true;
 }

@@ -42,6 +42,7 @@ glm::vec4 SpritePhaseCache::FindFreeRegion( SpritePhase const& sprphase )
             ( mCacheIndex / mRowSize + 1 ) * mMaxCellSize / mTargetSize.x,
             ( mCacheIndex % mRowSize + 1 ) * mMaxCellSize / mTargetSize.y
         );
+    ++mCacheIndex;
     return rv;
 }
 
@@ -89,16 +90,17 @@ void SpritePhaseCache::Draw( SpritePhase const& sprphase, glm::vec4 const& freeR
     glDrawArrays( GL_TRIANGLE_STRIP, 0, 4 );
 }
 
-void SpritePhaseCache::Request( SpritePhase const& sprphase )
+void SpritePhaseCache::Request( SpritePhase const& sprphase, float size )
 {
     if( sprphase.TexId == mTargetTexId )
     {
         return;
     }
-    if( false && sprphase.Right - sprphase.Left > 200 )
+    if( size > mMaxCellSize )
     {
         return;
     }
+    // size *= 0.3;
     glm::vec4 freeRegion = FindFreeRegion( sprphase );
     if( freeRegion.x == 0 &&
         freeRegion.z == 0 &&
@@ -107,7 +109,12 @@ void SpritePhaseCache::Request( SpritePhase const& sprphase )
     {
         return;
     }
-    mPending.insert( &sprphase );
+    auto dx = freeRegion.z - freeRegion.x;
+    freeRegion.z = freeRegion.x + size / mMaxCellSize * dx;
+    auto dy = freeRegion.w - freeRegion.y;
+    freeRegion.w = freeRegion.y + size / mMaxCellSize * dy;
+    // todo: max?
+    mPending[ &sprphase ] = ExtData{ freeRegion, size };
 }
 
 // simply render to a 200*200 grid, or 100*100 + 200*200
@@ -133,21 +140,13 @@ void SpritePhaseCache::ProcessPending()
     glActiveTexture( GL_TEXTURE0 + 1 );
     mVAO.Bind();
 
-    for( auto const* spr : mPending )
+    for( auto const& vt : mPending )
     {
-        auto const& sprphase = *spr;
-        mOriginal[ spr ] = sprphase;
+        auto const& sprphase = *vt.first;
+        mOriginal[ &sprphase ] = sprphase;
 
         // copy the sprite to the temp map
-        auto const& freeRegion = FindFreeRegion( sprphase );
-        if( freeRegion.x == 0 &&
-            freeRegion.z == 0 &&
-            freeRegion.y == 0 &&
-            freeRegion.w == 0 )
-        {
-            break;
-        }
-        ++mCacheIndex;
+        auto const& freeRegion = vt.second.freeRegion;
 
         Draw( sprphase, freeRegion );
 

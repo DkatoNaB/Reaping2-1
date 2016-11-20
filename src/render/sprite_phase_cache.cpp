@@ -2,16 +2,18 @@
 #include "render_target.h"
 #include "shader_manager.h"
 #include "platform/log.h"
+#include "platform/settings.h"
 
 namespace render {
 
 SpritePhaseCache::SpritePhaseCache()
 {
+    static Settings& settings( Settings::Get() );
+    mMaxCellSize = settings.GetInt( "graphics.sprite_phase_cache.max_cell_size", 128 );
     static RenderTarget& rt( RenderTarget::Get() );
     mTarget = rt.GetFreeId();
     uint32_t current = rt.GetCurrentTarget();
     mTargetSize = rt.GetMaxTextureSize();
-//    mTargetSize = glm::vec2(512,512);
     mRowSize = std::floor( mTargetSize.x / mMaxCellSize );
     L1( "Texture size: %d x %d\n", (int)mTargetSize.x, (int)mTargetSize.y );
     rt.SetTargetTexture( mTarget, mTargetSize );
@@ -46,32 +48,10 @@ glm::vec4 SpritePhaseCache::FindFreeRegion( SpritePhase const& sprphase )
     return rv;
 }
 
-void SpritePhaseCache::Draw( SpritePhase const& sprphase, glm::vec4 const& freeRegion )
+namespace {
+void DoDraw( std::vector<glm::vec2> const& Positions,
+        std::vector<glm::vec2> const& TexCoords )
 {
-    std::vector<glm::vec2> Positions;
-    std::vector<glm::vec2> TexCoords;
-
-    L1( "region: %f %f %f %f\n",
-            freeRegion.x,
-            freeRegion.y,
-            freeRegion.z,
-            freeRegion.w );
-
-    Positions.emplace_back( freeRegion.x, freeRegion.y );
-    Positions.emplace_back( freeRegion.x, freeRegion.w );
-    Positions.emplace_back( freeRegion.z, freeRegion.y );
-    Positions.emplace_back( freeRegion.z, freeRegion.w );
-
-/*    Positions.emplace_back( -0.5, -0.5 );
-    Positions.emplace_back( -0.5, 0.5 );
-    Positions.emplace_back( 0.5, -0.5 );
-    Positions.emplace_back( 0.5, 0.5 ); */
-
-    TexCoords.emplace_back( sprphase.Left, sprphase.Bottom );
-    TexCoords.emplace_back( sprphase.Left, sprphase.Top );
-    TexCoords.emplace_back( sprphase.Right, sprphase.Bottom );
-    TexCoords.emplace_back( sprphase.Right, sprphase.Top );
-
     size_t CurrentOffset = 0;
     size_t CurrentSize = 0;
     GLuint CurrentAttribIndex = 0;
@@ -86,21 +66,136 @@ void SpritePhaseCache::Draw( SpritePhase const& sprphase, glm::vec4 const& freeR
     glBufferSubData( GL_ARRAY_BUFFER, CurrentOffset, CurrentSize, &Positions[0] );
     size_t const PosIndex = CurrentOffset;
 
+    glDrawArrays( GL_TRIANGLE_STRIP, 0, CurSize );
+}
+
+}
+
+void SpritePhaseCache::Draw( SpritePhase const& sprphase, glm::vec4 const& freeRegion, glm::vec4 const& scaledRegion )
+{
     glBindTexture( GL_TEXTURE_2D, sprphase.TexId );
-    glDrawArrays( GL_TRIANGLE_STRIP, 0, 4 );
+
+    std::vector<glm::vec2> Positions;
+    std::vector<glm::vec2> TexCoords;
+
+    L1( "region: %f %f %f %f\n",
+            freeRegion.x,
+            freeRegion.y,
+            freeRegion.z,
+            freeRegion.w );
+
+// mid
+    Positions.emplace_back( scaledRegion.x, scaledRegion.y );
+    Positions.emplace_back( scaledRegion.x, scaledRegion.w );
+    Positions.emplace_back( scaledRegion.z, scaledRegion.y );
+    Positions.emplace_back( scaledRegion.z, scaledRegion.w );
+
+    TexCoords.emplace_back( sprphase.Left, sprphase.Bottom );
+    TexCoords.emplace_back( sprphase.Left, sprphase.Top );
+    TexCoords.emplace_back( sprphase.Right, sprphase.Bottom );
+    TexCoords.emplace_back( sprphase.Right, sprphase.Top );
+
+    DoDraw( Positions, TexCoords );
+    static Settings& settings( Settings::Get() );
+    static bool gapless = settings.GetInt( "graphics.sprite_phase_cache.gapless", 1 ) != 0;
+    if( !gapless )
+    {
+        return;
+    }
+// left
+    Positions.clear();
+    TexCoords.clear();
+
+    Positions.emplace_back( freeRegion.x, scaledRegion.y );
+    Positions.emplace_back( freeRegion.x, scaledRegion.w );
+    Positions.emplace_back( scaledRegion.x, scaledRegion.y );
+    Positions.emplace_back( scaledRegion.x, scaledRegion.w );
+
+    TexCoords.emplace_back( sprphase.Left, sprphase.Bottom );
+    TexCoords.emplace_back( sprphase.Left, sprphase.Top );
+    TexCoords.emplace_back( sprphase.Left, sprphase.Bottom );
+    TexCoords.emplace_back( sprphase.Left, sprphase.Top );
+
+    DoDraw( Positions, TexCoords );
+// right
+    Positions.clear();
+    TexCoords.clear();
+
+    Positions.emplace_back( scaledRegion.z, scaledRegion.y );
+    Positions.emplace_back( scaledRegion.z, scaledRegion.w );
+    Positions.emplace_back( freeRegion.z, scaledRegion.y );
+    Positions.emplace_back( freeRegion.z, scaledRegion.w );
+
+    TexCoords.emplace_back( sprphase.Right, sprphase.Bottom );
+    TexCoords.emplace_back( sprphase.Right, sprphase.Top );
+    TexCoords.emplace_back( sprphase.Right, sprphase.Bottom );
+    TexCoords.emplace_back( sprphase.Right, sprphase.Top );
+
+    DoDraw( Positions, TexCoords );
+// top
+    Positions.clear();
+    TexCoords.clear();
+
+    Positions.emplace_back( scaledRegion.x, scaledRegion.w );
+    Positions.emplace_back( scaledRegion.x, freeRegion.w );
+    Positions.emplace_back( scaledRegion.z, scaledRegion.w );
+    Positions.emplace_back( scaledRegion.z, freeRegion.w );
+
+    TexCoords.emplace_back( sprphase.Left, sprphase.Top );
+    TexCoords.emplace_back( sprphase.Left, sprphase.Top );
+    TexCoords.emplace_back( sprphase.Right, sprphase.Top );
+    TexCoords.emplace_back( sprphase.Right, sprphase.Top );
+
+    DoDraw( Positions, TexCoords );
+// bottom
+    Positions.clear();
+    TexCoords.clear();
+
+    Positions.emplace_back( scaledRegion.x, freeRegion.y );
+    Positions.emplace_back( scaledRegion.x, scaledRegion.y );
+    Positions.emplace_back( scaledRegion.z, freeRegion.y );
+    Positions.emplace_back( scaledRegion.z, scaledRegion.y );
+
+    TexCoords.emplace_back( sprphase.Left, sprphase.Bottom );
+    TexCoords.emplace_back( sprphase.Left, sprphase.Bottom );
+    TexCoords.emplace_back( sprphase.Right, sprphase.Bottom );
+    TexCoords.emplace_back( sprphase.Right, sprphase.Bottom );
+
+    DoDraw( Positions, TexCoords );
+}
+
+namespace {
+glm::vec4 ScaleRegion( glm::vec4 freeRegion, float scale )
+{
+    auto dx = freeRegion.z - freeRegion.x;
+    freeRegion.x += dx * ( 1 - scale ) / 2;
+    freeRegion.z = freeRegion.x + scale * dx;
+    auto dy = freeRegion.w - freeRegion.y;
+    freeRegion.y += dy * ( 1 - scale ) / 2;
+    freeRegion.w = freeRegion.y + scale * dy;
+    return freeRegion;
+}
 }
 
 void SpritePhaseCache::Request( SpritePhase const& sprphase, float size )
 {
+    static Settings& settings( Settings::Get() );
+    static bool enabled = settings.GetInt( "graphics.sprite_phase_cache.enabled", 1 ) != 0;
+    if( !enabled )
+    {
+        return;
+    }
     if( sprphase.TexId == mTargetTexId )
     {
         return;
     }
-    if( size > mMaxCellSize )
+    static bool useSizeLimit = settings.GetInt( "graphics.sprite_phase_cache.use_size_limit", 1 ) != 0;
+    if( useSizeLimit && size > mMaxCellSize )
     {
         return;
     }
-    // size *= 0.3;
+    static float downsample = settings.GetFloat( "graphics.sprite_phase_cache.downsample", 1 );
+    size *= downsample;
     glm::vec4 freeRegion = FindFreeRegion( sprphase );
     if( freeRegion.x == 0 &&
         freeRegion.z == 0 &&
@@ -109,18 +204,11 @@ void SpritePhaseCache::Request( SpritePhase const& sprphase, float size )
     {
         return;
     }
-    auto dx = freeRegion.z - freeRegion.x;
-    freeRegion.z = freeRegion.x + size / mMaxCellSize * dx;
-    auto dy = freeRegion.w - freeRegion.y;
-    freeRegion.w = freeRegion.y + size / mMaxCellSize * dy;
+    auto const& scaledRegion = ScaleRegion( freeRegion, size / mMaxCellSize );
     // todo: max?
-    mPending[ &sprphase ] = ExtData{ freeRegion, size };
+    mPending[ &sprphase ] = ExtData{ freeRegion, scaledRegion, size };
 }
 
-// simply render to a 200*200 grid, or 100*100 + 200*200
-// use (up)scaling
-// intel supports a 8k*8k texture, which results in 1.6k cached spritephases
-// that oughta be enough
 void SpritePhaseCache::ProcessPending()
 {
     if( mPending.empty() )
@@ -130,7 +218,6 @@ void SpritePhaseCache::ProcessPending()
     static RenderTarget& rt( RenderTarget::Get() );
     rt.SelectTargetTexture( mTarget );
     glEnable( GL_TEXTURE_2D );
-//    glBlendFunc( GL_ONE, GL_ZERO );
     glEnable( GL_BLEND );
     glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
     glViewport( 0, 0, mTargetSize.x, mTargetSize.y );
@@ -147,8 +234,9 @@ void SpritePhaseCache::ProcessPending()
 
         // copy the sprite to the temp map
         auto const& freeRegion = vt.second.freeRegion;
+        auto const& scaledRegion = vt.second.scaledRegion;
 
-        Draw( sprphase, freeRegion );
+        Draw( sprphase, freeRegion, scaledRegion );
 
         SpritePhase& mutablePhase = const_cast<SpritePhase&>( sprphase );
 
@@ -159,10 +247,10 @@ void SpritePhaseCache::ProcessPending()
                 mutablePhase.Right,
                 mutablePhase.Top );
 
-        mutablePhase.Left = freeRegion.x;
-        mutablePhase.Bottom = freeRegion.y;
-        mutablePhase.Right = freeRegion.z;
-        mutablePhase.Top = freeRegion.w;
+        mutablePhase.Left = scaledRegion.x;
+        mutablePhase.Bottom = scaledRegion.y;
+        mutablePhase.Right = scaledRegion.z;
+        mutablePhase.Top = scaledRegion.w;
 
         mutablePhase.TexId = mTargetTexId;
         L1( "spr post: %d %f %f %f %f\n",

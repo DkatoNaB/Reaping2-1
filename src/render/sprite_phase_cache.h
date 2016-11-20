@@ -19,19 +19,20 @@ class SpritePhaseCache : public platform::Singleton<SpritePhaseCache>
     struct ExtData
     {
         glm::vec4 freeRegion;
+        glm::vec4 scaledRegion;
         float size;
     };
     std::map<SpritePhase const*,ExtData> mPending;
     uint32_t mTarget;
     glm::vec2 mTargetSize;
-    static const int mMaxCellSize = 128;
+    int mMaxCellSize;
     int mCacheIndex = 0;
     int mRowSize = 0;
     VaoBase mVAO;
     friend class platform::Singleton<SpritePhaseCache>;
     SpritePhaseCache();
     glm::vec4 FindFreeRegion( SpritePhase const& sprphase );
-    void Draw( SpritePhase const& sprphase, glm::vec4 const& freeRegion );
+    void Draw( SpritePhase const& sprphase, glm::vec4 const& freeRegion, glm::vec4 const& scaledRegion );
 public:
     GLuint mTargetTexId;
     void ProcessPending();

@@ -19,6 +19,8 @@ public:
     CollisionSystem();
     virtual void Init();
     virtual void Update( double DeltaTime );
+    std::set<Actor*> GetAllActors( glm::vec2 const& position, double radius, CollisionClass collClass ) const;
+    bool IsColliding( Actor const& actor, double radius = 0.0 ) const;
 private:
     Opt<CollisionSubSystem> GetCollisionSubSystem( int32_t id );
     Grid mCollisionGrid;

@@ -74,6 +74,27 @@ void Grid::Build( glm::vec4 const& Dimensions, float CellSize )
     mCells.resize( mDimX * mDimY );
 }
 
+std::set<Actor*> Grid::GetAllActors( glm::vec2 const& position, double radius, CollisionClass collClass ) const
+{
+    glm::vec4 ActorDim( position.x - radius - mMin.x, position.y - radius - mMin.y,
+            position.x + radius - mMin.x, position.y + radius - mMin.y );
+
+    size_t const Ex = ( size_t )glm::floor( std::max<float>( 0.0f, ActorDim.z ) / mCellSize );
+    size_t const Ey = ( size_t )glm::floor( std::max<float>( 0.0f, ActorDim.w ) / mCellSize );
+    size_t const Sx = ( size_t )glm::floor( std::max<float>( 0.0f, ActorDim.x ) / mCellSize );
+    size_t const Sy = ( size_t )glm::floor( std::max<float>( 0.0f, ActorDim.y ) / mCellSize );
+    std::set<Actor*> rv;
+    for( size_t y = Sy, ey = std::min<size_t>( Ey + 1, mDimY ); y < ey; ++y )
+    {
+        for( size_t x = Sx, ex = std::min<size_t>( Ex + 1, mDimX ); x < ex; ++x )
+        {
+            auto const& cell = mCells[y * mDimX + x];
+            rv.insert( cell.mActors[CC].begin(), cell.mActors[CC].end() );
+        }
+    }
+    return rv;
+}
+
 void Grid::AddActor( Actor* A, double Dt, Opt<ICollisionComponent> collisionC )
 {
     int32_t const CC = collisionC->GetCollisionClass();

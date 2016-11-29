@@ -3,6 +3,7 @@
 #include "core/i_position_component.h"
 #include "core/i_move_component.h"
 #include "core/i_collision_component.h"
+#include "collision_model.h"
 
 const uint32_t Grid::Collisions[] =
 {
@@ -74,7 +75,7 @@ void Grid::Build( glm::vec4 const& Dimensions, float CellSize )
     mCells.resize( mDimX * mDimY );
 }
 
-std::set<Actor*> Grid::GetAllActors( glm::vec2 const& position, double radius, CollisionClass collClass ) const
+std::set<Actor*> Grid::GetAllCollidingActors( glm::vec2 const& position, double radius, CollisionClass::Type collClass ) const
 {
     glm::vec4 ActorDim( position.x - radius - mMin.x, position.y - radius - mMin.y,
             position.x + radius - mMin.x, position.y + radius - mMin.y );
@@ -89,7 +90,14 @@ std::set<Actor*> Grid::GetAllActors( glm::vec2 const& position, double radius, C
         for( size_t x = Sx, ex = std::min<size_t>( Ex + 1, mDimX ); x < ex; ++x )
         {
             auto const& cell = mCells[y * mDimX + x];
-            rv.insert( cell.mActors[CC].begin(), cell.mActors[CC].end() );
+            for( size_t j = 0; j < CollisionClass::Num_Classes; ++j )
+            {
+                if( !( Collisions[collClass] & ( 1 << j ) ) )
+                {
+                    continue;
+                }
+                rv.insert( cell.mActors[j].begin(), cell.mActors[j].end() );
+            }
         }
     }
     return rv;

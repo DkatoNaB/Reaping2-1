@@ -114,5 +114,49 @@ Opt<CollisionSubSystem> CollisionSystem::GetCollisionSubSystem( int32_t id )
     return nullptr;
 }
 
+std::set<Actor*> CollisionSystem::GetAllCollidingActors( glm::vec2 const& position, double radius, int32_t collMask ) const
+{
+    CollisionModel::Object ObjA{ position, glm::vec2(), radius };
+    std::set<Actor*> all( mCollisionGrid.GetAllActors( position, radius, collClass ) ), rv;
+    for( auto actor : all )
+    {
+        Opt<ICollisionComponent> ACollisionC = actor->Get<ICollisionComponent>();
+        CollisionModel const& CollModel = mCollisionStore.GetCollisionModel( ACollisionC->GetCollisionClass(), collClass );
+        CollisionModel::Object ObjB( CollisionModel::ObjectFromActor( *actor ) );
+        if( CollModel.AreActorsColliding( ObjA, ObjB, 0.0 ) )
+        {
+            rv.insert( actor );
+        }
+    }
+    return rv;
+}
+
+bool IsColliding( Actor const& actor, double radius = 0.0 ) const
+{
+    Opt<ICollisionComponent> collisionC = actor.Get<ICollisionComponent>();
+    if ( !collisionC.IsValid() )
+    {
+        return false;
+    }
+    CollisionModel::Object ObjA( CollisionModel::ObjectFromActor( actor ) );
+    std::set<Actor*> all( mCollisionGrid.GetAllActors( position, radius, collClass ) );
+    for( auto act : all )
+    {
+        if( act == &actor )
+        {
+            continue;
+        }
+        Opt<ICollisionComponent> ACollisionC = act->Get<ICollisionComponent>();
+        CollisionModel const& CollModel = mCollisionStore.GetCollisionModel( ACollisionC->GetCollisionClass(), collClass );
+        CollisionModel::Object ObjB( CollisionModel::ObjectFromActor( *act ) );
+        if( CollModel.AreActorsColliding( ObjA, ObjB, 0.0 ) )
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+
 } // namespace engine
 

@@ -1398,6 +1398,7 @@ freelance
 freelance_act.h
 frequency
 from
+fullscreen
 function_declarations.h
 g
 game.exit
@@ -1433,6 +1434,7 @@ generator_name
 glm_fix.h
 graphics.cast_shadows
 graphics.gl.max_allowed_texture_size
+graphics.height
 graphics.shadow_scale
 graphics.sprite_phase_cache.downsample
 graphics.sprite_phase_cache.enabled
@@ -1440,6 +1442,8 @@ graphics.sprite_phase_cache.gapless
 graphics.sprite_phase_cache.max_cell_size
 graphics.sprite_phase_cache.use_size_limit
 graphics.vsync
+graphics.width
+graphics.window_mode
 grass
 greater
 grenade_normal_item
@@ -2671,6 +2675,7 @@ widget_factory.h
 width
 window.h
 window_system
+windowed
 windup_time
 wnd
 world_renderer.h

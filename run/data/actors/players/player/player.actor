@@ -8,7 +8,7 @@
                 "set":[{"speed":750}]
             },
             {"name":"renderable_component",
-                "set":[{"layer":"players", "cast_shadow":1}]
+                "set":[{"layer":"players", "cast_shadow":0}]
             },
             {"name":"collision_component",
                 "set":[{"class":"player", "radius":30}]
@@ -19,7 +19,7 @@
                         "select_weapon":"plasma_gun"}]
             },
             {"name":"health_component",
-                "set":[{"hp":1000}]
+                "set":[{"hp":100}]
             },
             {"name":"accuracy_component",
                 "set":[{"accuracy":0}]

@@ -172,6 +172,7 @@ CollisionMessage
 CollisionMessageHandlerSubSystem
 CollisionMessageSenderSystem
 CollisionSystem
+Color
 Component
 ComponentType
 ControllerAdapterSystem
@@ -401,9 +402,11 @@ PlayerControllerMessageSenderSystem
 PlayerControllerSubSystem
 PlayerModelSystem
 PointerTargetControllerSubSystem
+Position
 PositionMessage
 PositionMessageHandlerSubSystem
 PositionMessageSenderSystem
+ProjMtx
 PropertyEditorSystem
 PulseSystem
 Pulses_t-pulses
@@ -487,9 +490,11 @@ Team::Type-team
 TeamSwitchRequestMessage
 TeamSwitchRequestMessageHandlerSubSystem
 TeamSwitchRequestMessageSenderSystem
+Texture
 TextureImpl.h
 TimerServerSystem
 Towards
+UV
 Undeploy
 Undeploy:
 WaitingStartSystem
@@ -1719,6 +1724,7 @@ image
 image.h
 image_uimodel.h
 images
+imgui_impl.h
 index
 inherit_orientation
 init.h
@@ -2214,6 +2220,7 @@ platform/game_clock.h
 platform/glm_fix.h
 platform/i_platform.h
 platform/id_storage.h
+platform/imgui_impl.h
 platform/init.h
 platform/jsonreader.h
 platform/log.h
@@ -2840,3 +2847,5 @@ x
 x.x.x.x
 y
 zorder
+{\n
+}\n

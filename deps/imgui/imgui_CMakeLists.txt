@@ -1,0 +1,32 @@
+cmake_minimum_required( VERSION 2.4 )
+
+project( imgui )
+set( CMAKE_DEBUG_POSTFIX d )
+add_definitions( -D_ITERATOR_DEBUG_LEVEL=0 )
+
+find_package(OpenGL REQUIRED)
+
+include_directories(${OPENGL_INCLUDE_DIR})
+include_directories( . )
+include_directories( examples/opengl3_example )
+
+file( GLOB sources *.cpp )
+
+file( GLOB headers *.h )
+
+add_library( imgui STATIC
+    ${sources}
+    )
+set_target_properties( imgui PROPERTIES PUBLIC_HEADER "${headers}" )
+if(WIN32)
+    target_link_libraries( imgui imm32 )
+endif()
+
+install(TARGETS imgui
+    RUNTIME DESTINATION bin
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
+    PUBLIC_HEADER DESTINATION include
+    )
+
+install(FILES FindIMGUI.cmake DESTINATION lib/cmake)

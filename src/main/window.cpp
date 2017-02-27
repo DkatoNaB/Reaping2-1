@@ -1,6 +1,7 @@
 #include "window.h"
 #include "window_settings.h"
 #include "platform/settings.h"
+#include "platform/imgui_impl.h"
 
 namespace {
 void Window_FramebufferSizeCallback( GLFWwindow* Window, int Width, int Height )
@@ -43,6 +44,8 @@ bool WindowSystem::Create( const std::string& Title )
             glfwSetInputMode( mWindow, GLFW_CURSOR, GLFW_CURSOR_HIDDEN );
             bool vsync = Settings::Get().GetBool( "graphics.vsync", false );
             glfwSwapInterval( vsync ? 1 : 0 );
+            // setup imgui binding
+            ImGui_ImplGlfwGL3_Init( mWindow, true );
         }
     }
     else
@@ -57,6 +60,7 @@ void WindowSystem::Destroy()
 {
     if( mWindow )
     {
+        ImGui_ImplGlfwGL3_Shutdown();
         glfwDestroyWindow( mWindow );
         glfwTerminate();
     }
@@ -119,6 +123,7 @@ void WindowSystem::Update( double DeltaTime )
 
     glfwSwapBuffers( mWindow );
     glfwPollEvents();
+    ImGui_ImplGlfwGL3_NewFrame();
 }
 
 } // namespace engine

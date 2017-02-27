@@ -11,8 +11,9 @@
 #include "light_system.h"
 #include "core/i_light_component.h"
 #include "core/i_position_component.h"
-#include <boost/assign.hpp>
 #include "engine/system_suppressor.h"
+#include <boost/assign.hpp>
+#include <imgui.h>
 
 namespace engine {
 namespace {
@@ -258,6 +259,14 @@ std::vector<LightDesc> getLights()
 
 void RendererSystem::Update( double DeltaTime )
 {
+    {
+        bool show_test_window = true;
+        if (show_test_window)
+        {
+            ImGui::ShowTestWindow(&show_test_window);
+        }
+    }
+
     using render::RenderTargetProps;
     perf::Timer_t method;
     method.Log( "start render" );
@@ -641,6 +650,9 @@ void RendererSystem::Update( double DeltaTime )
     method.Log( "end draw" );
     cache.ProcessPending();
     method.Log( "end process pending" );
+    method.Log( "start imgui" );
+    // render imgui on top of everything
+    ImGui::Render();
     method.Log( "end render" );
 }
 

@@ -93,6 +93,7 @@ include_directories( SYSTEM
     ${WIN32_ENET_INCLUDE_WS2_32}
     ${WIN32_ENET_INCLUDE_WINMM}
     ${ENET_INCLUDE_DIR}
+    ${IMGUI_INCLUDE_DIR}
     )
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)

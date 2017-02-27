@@ -77,6 +77,8 @@ if(WIN32)
     find_package( Dbg )
 endif()
 
+find_package( IMGUI )
+
 my_find_package( LIBOGG ogg/ogg.h ogg libogg libogg_static )
 
 my_find_package( LIBVORBIS vorbis/vorbisfile.h vorbis ${VORBISFILE_LIBRARY_NAMES} )

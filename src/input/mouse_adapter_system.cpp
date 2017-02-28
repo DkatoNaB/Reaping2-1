@@ -5,6 +5,7 @@
 #include "engine/engine.h"
 #include "mouse.h"
 #include "player_control_device.h"
+#include <imgui.h>
 
 namespace engine {
 
@@ -44,13 +45,16 @@ void MouseAdapterSystem::Update( double DeltaTime )
         Opt<IPositionComponent> actorPositionC = actor->Get<IPositionComponent>();
         inputState.mOrientation = atan2( mY - actorPositionC->GetY(), mX - actorPositionC->GetX() );
     }
-    if ( mMouse->IsButtonPressed( MouseSystem::Button_Left ) )
+    if( !ImGui::IsMouseHoveringAnyWindow() )
     {
-        inputState.mShoot = true;
-    }
-    else if ( mMouse->IsButtonPressed( MouseSystem::Button_Right ) )
-    {
-        inputState.mShootAlt = true;
+        if ( mMouse->IsButtonPressed( MouseSystem::Button_Left ) )
+        {
+            inputState.mShoot = true;
+        }
+        else if ( mMouse->IsButtonPressed( MouseSystem::Button_Right ) )
+        {
+            inputState.mShootAlt = true;
+        }
     }
     mInputSystem->SetInputState( playerId, inputState );
 }

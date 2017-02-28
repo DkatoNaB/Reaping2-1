@@ -118,6 +118,10 @@ void RendererSystem::OnMouseMoveEvent( const ScreenMouseMoveEvent& Event )
 
 void RendererSystem::OnMousePressEvent( const ScreenMousePressEvent& Event )
 {
+    if( ImGui::IsMouseHoveringAnyWindow() )
+    {
+        return;
+    }
     glm::vec3 EvtPos( Event.Pos.x, Event.Pos.y, 0 );
     glm::vec3 UiEvtPos = mUiProjector.Unproject( EvtPos );
     UiMousePressEvent UiEvt( glm::vec2( UiEvtPos.x, UiEvtPos.y ), Event.Button );
@@ -134,6 +138,10 @@ void RendererSystem::OnMousePressEvent( const ScreenMousePressEvent& Event )
 
 void RendererSystem::OnMouseReleaseEvent( const ScreenMouseReleaseEvent& Event )
 {
+    if( ImGui::IsMouseHoveringAnyWindow() )
+    {
+        return;
+    }
     glm::vec3 EvtPos( Event.Pos.x, Event.Pos.y, 0 );
     glm::vec3 UiEvtPos = mUiProjector.Unproject( EvtPos );
     UiMouseReleaseEvent UiEvt( glm::vec2( UiEvtPos.x, UiEvtPos.y ), Event.Button );
@@ -255,10 +263,10 @@ std::vector<LightDesc> getLights()
     }
     return lds;
 }
-} // namespace anonymous
-
-void RendererSystem::Update( double DeltaTime )
+void ImguiTestWindow()
 {
+    static bool const imguiTest = Settings::Get().GetBool( "graphics.imgui_test", false );
+    if( imguiTest )
     {
         bool show_test_window = true;
         if (show_test_window)
@@ -266,7 +274,11 @@ void RendererSystem::Update( double DeltaTime )
             ImGui::ShowTestWindow(&show_test_window);
         }
     }
+}
+} // namespace anonymous
 
+void RendererSystem::Update( double DeltaTime )
+{
     using render::RenderTargetProps;
     perf::Timer_t method;
     method.Log( "start render" );
@@ -652,6 +664,8 @@ void RendererSystem::Update( double DeltaTime )
     method.Log( "end process pending" );
     method.Log( "start imgui" );
     // render imgui on top of everything
+    ImguiTestWindow();
+    ImGui::GetIO().MouseDrawCursor = ImGui::IsMouseHoveringAnyWindow();
     ImGui::Render();
     method.Log( "end render" );
 }

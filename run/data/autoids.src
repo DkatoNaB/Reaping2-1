@@ -1507,6 +1507,7 @@ glm_fix.h
 graphics.cast_shadows
 graphics.gl.max_allowed_texture_size
 graphics.height
+graphics.imgui_test
 graphics.postprocess
 graphics.pp_blacklist
 graphics.preferred_monitor

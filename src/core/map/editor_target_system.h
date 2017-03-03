@@ -6,6 +6,7 @@
 #include "boost/ptr_container/ptr_vector.hpp"
 #include "target_repo.h"
 #include "../actor_factory.h"
+#include "input/mouse.h"
 
 namespace map {
 
@@ -67,6 +68,11 @@ private:
     std::vector<int32_t> SpawnpointBackground();
     boost::ptr_vector<ModelValue> mEditorModels;
     void TargetChanged( std::string const& targetType, int32_t targetIdx );
+
+
+    void OnMouseClickEvent( const WorldMouseReleaseEvent& Event );
+    AutoReg mMouseClickId;
+
 };
 
 } // namespace map

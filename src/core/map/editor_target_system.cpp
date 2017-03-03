@@ -88,6 +88,8 @@ EditorTargetSystem::EditorTargetSystem()
 
 void EditorTargetSystem::Init()
 {
+    mMouseClickId = EventServer<WorldMouseReleaseEvent>::Get().Subscribe( boost::bind( &EditorTargetSystem::OnMouseClickEvent, this, _1 ) );
+
     ModelValue& editorModel = const_cast<ModelValue&>( RootModel::Get()["editor"] );
     mEditorModels.push_back( new ModelValue( "target", &editorModel ) );
     ModelValue& targetModel = mEditorModels.back();
@@ -357,6 +359,18 @@ void EditorTargetSystem::AddCursor()
     mCursorGuid = cursor->GetGUID();
     mScene.AddActor( cursor.release() );
     mCursor = mScene.GetActor( mCursorGuid );
+}
+
+void EditorTargetSystem::OnMouseClickEvent( const WorldMouseReleaseEvent& Event )
+{
+    if( !mEnabled )
+    {
+        return;
+    }
+    if( Event.Button == engine::MouseSystem::Button_Left )
+    {
+        PutTarget( Event.Pos );
+    }
 }
 
 } // namespace map

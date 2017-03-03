@@ -25,6 +25,7 @@ namespace map {
 
 void BorderBrush::Update( double DeltaTime )
 {
+    return;
     if ( !EditorTargetSystem::Get()->GetCursor().IsValid() )
     {
         return;

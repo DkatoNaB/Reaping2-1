@@ -22,6 +22,7 @@ NormalBrush::NormalBrush( int32_t Id )
 
 void NormalBrush::Update( double DeltaTime )
 {
+    return;
     if ( !EditorTargetSystem::Get()->GetCursor().IsValid() )
     {
         return;

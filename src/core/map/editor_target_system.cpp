@@ -9,7 +9,8 @@
 #include "target_repo.h"
 #include "pickup_target.h"
 #include "wall_target.h"
-
+#include "editor_hud_state.h"
+#include <imgui.h>
 
 namespace {
 
@@ -49,6 +50,26 @@ namespace {
                 }
             }
         }
+    }
+
+    static bool GetTargets( void* data, int idx, char const** out )
+    {
+        if( data == nullptr )
+        {
+            return false;
+        }
+        std::vector<int32_t>* vec = static_cast<std::vector<int32_t>* >( data );
+        if( idx >= 0 && idx < vec->size() )
+        {
+            IdStorage & idstorage = IdStorage::Get();
+            static std::string name; // static: we need the pointer valid after return, but the same data can be reused
+            if( idstorage.GetName( vec->at( idx ), name ) )
+            {
+                *out = &name[0];
+                return true;
+            }
+        }
+        return false;
     }
 }
 
@@ -138,6 +159,7 @@ void EditorTargetSystem::Init()
 void EditorTargetSystem::Update( double DeltaTime )
 {
     GetTarget().Update( DeltaTime );
+    mCursor = mScene.GetActor( mCursorGuid );
     if ( mCursor.IsValid() )
     {
         Opt<IPositionComponent> positionC( mCursor->Get<IPositionComponent>() );
@@ -147,6 +169,56 @@ void EditorTargetSystem::Update( double DeltaTime )
             positionC->SetY( mCursorPosition.y );
         }
     }
+
+    if (!mEnabled)
+    {
+        return;
+    }
+
+    bool shown = true;
+    ImGui::Begin( "Editor", &shown );
+    char const* targettypes[] = {
+        "spawnpoint",
+        "mapitem",
+        "gun",
+        "buff",
+        "item",
+    };
+    ImGui::Combo( "type", &mTargetType, targettypes, 5 );
+    auto& tgt = mTargetActorIdsMap[ targettypes[mTargetType] ];
+    if( mTarget >= tgt.size() )
+    {
+        mTarget = 0;
+    }
+    auto id = mTargetId;
+    if( 0 <= mTarget && mTarget < tgt.size() )
+    {
+        id = tgt.at( mTarget );
+    }
+    if( id != mTargetId )
+    {
+        RemoveCursor();
+        mTargetId = id;
+        AddCursor();
+    }
+    ImGui::Combo( "target", &mTarget, &GetTargets, &tgt, tgt.size() );
+    char const* brush[] = {
+        "normal",
+        "border",
+    };
+    ImGui::Combo( "brush", &mBrush, brush, 2 );
+    char const* pos[] = {
+        "free",
+        "snap to grid",
+    };
+    ImGui::Combo( "positioning", &mPositioning, pos, 2 );
+    char const* layers[] = {
+        "any",
+        "target",
+    };
+    ImGui::Combo( "select layer", &mSelectLayer, layers, 2 );
+    ImGui::End();
+
 }
 
 void EditorTargetSystem::TargetChanged( std::string const& targetType, int32_t targetIdx )
@@ -282,9 +354,9 @@ void EditorTargetSystem::AddCursor()
         positionC->SetX( mCursorPosition.x );
         positionC->SetY( mCursorPosition.y );
     }
-    int32_t guid = cursor->GetGUID();
+    mCursorGuid = cursor->GetGUID();
     mScene.AddActor( cursor.release() );
-    mCursor = mScene.GetActor( guid );
+    mCursor = mScene.GetActor( mCursorGuid );
 }
 
 } // namespace map

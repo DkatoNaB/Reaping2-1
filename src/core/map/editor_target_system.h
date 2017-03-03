@@ -33,10 +33,20 @@ protected:
 private:
     Scene& mScene;
     TargetRepo& mTargetRepo;
+
+    bool mEditorMode = false;
+    int mTargetType = 0;
+    int mTarget = 0;
+    int mBrush = 0;
+    int mPositioning = 0;
+    int mSelectLayer = 0;
+
     int32_t mTargetId;
     glm::vec2 mCursorPosition;
     Opt<Actor> mCursor;
+    int32_t mCursorGuid = -1;
     int32_t mNextUID;
+
     std::vector<int32_t> mGunVisualIds;
     std::vector<int32_t> mGunActorIds;
     std::vector<int32_t> mBuffVisualIds;

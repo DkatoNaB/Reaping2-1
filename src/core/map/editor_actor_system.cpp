@@ -82,7 +82,7 @@ void EditorActorSystem::OnEditorBack( map::EditorBackEvent const& Evt )
 void EditorActorSystem::EnableSubsystems( bool enable )
 {
     ::engine::Engine::Get().SetEnabled<EditorGridSystem>( enable );
-    ::engine::Engine::Get().SetEnabled<EditorTargetSystem>( enable );
+    ::engine::Engine::Get().SetEnabled<EditorTargetSystem>( true );
     ::engine::Engine::Get().SetEnabled<EditorBrushSystem>( enable );
 }
 

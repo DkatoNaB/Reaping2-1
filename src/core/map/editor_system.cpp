@@ -20,6 +20,7 @@
 #include "editor_hud_state.h"
 #include "spawn_actor_map_element_system.h"
 #include "map_repo.h"
+#include <imgui.h>
 
 namespace map {
 

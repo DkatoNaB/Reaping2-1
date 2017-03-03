@@ -211,6 +211,7 @@ Deploy
 Deploy:
 DetonateOnHitSystem
 DropOnDeathSystem
+Editor
 EditorActorSystem
 EditorBrushSystem
 EditorGridSystem
@@ -221,6 +222,7 @@ EditorSelectSystem
 EditorSoldierSpawnSystem
 EditorSystem
 EditorTargetSystem
+EditorUiSystem
 EditorVisibilitySystem
 ExplodeOnDeathSystem
 ExplodeOnHitSystem
@@ -993,6 +995,7 @@ core/map/editor_select_system.h
 core/map/editor_soldier_spawn_system.h
 core/map/editor_system.h
 core/map/editor_target_system.h
+core/map/editor_ui_system.h
 core/map/editor_visiblity_system.h
 core/map/group_map_element.h
 core/map/group_map_element_system.h
@@ -1276,6 +1279,7 @@ editor_system
 editor_system.h
 editor_target_system
 editor_target_system.h
+editor_ui_system.h
 editor_visibility
 editor_visibility_system
 editor_visiblity_system.h
@@ -1460,6 +1464,7 @@ fontsize
 for
 fps
 frame_counter_system
+free
 free_for_all_game_mode_system
 free_for_all_game_mode_system.h
 freelance
@@ -2261,6 +2266,7 @@ position_message_sender_system.h
 position_variance
 position_x
 position_y
+positioning
 possible_rooms
 possible_rooms.h
 postprocess_mask

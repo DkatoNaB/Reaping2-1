@@ -9,13 +9,9 @@ class BorderBrush: public IBrush
 {
 public:
     BorderBrush( int32_t Id );
-    virtual void Update( double DeltaTime );
-
     void UpdateBorders( Neighbors& neighbors );
-protected:
-
-    bool mMouseLeftPressed;
-    bool mMouseRightPressed;
+    virtual void CreateTarget();
+    virtual void RemoveTarget();
 };
 
 } // namespace map

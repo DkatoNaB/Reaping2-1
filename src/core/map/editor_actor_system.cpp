@@ -1,9 +1,6 @@
 #include "platform/i_platform.h"
 #include "editor_actor_system.h"
 #include "ui/ui.h"
-#include "editor_grid_system.h"
-#include "editor_target_system.h"
-#include "editor_brush_system.h"
 #include "../../engine/engine.h"
 #include "../../input/keyboard.h"
 #include "editor_hud_state.h"
@@ -36,13 +33,11 @@ void EditorActorSystem::Update(double DeltaTime)
         {
             EnableSubsystems( true );
             EventServer<EditorBackEvent>::Get().SendEvent( EditorBackEvent( true ) );
-            EditorTargetSystem::Get()->AddCursor();
         }
         else
         {
             EnableSubsystems( false );
             Ui::Get().Load( "editor_actor_hud" );
-            EditorTargetSystem::Get()->RemoveCursor();
             EditorHudState::Get().SetHudShown( true );
         }
     }
@@ -61,7 +56,6 @@ void EditorActorSystem::OnEditorModeChanged(map::EditorModeChangedEvent const& E
     {
         EnableSubsystems( false );
         ::engine::Engine::Get().SetEnabled<EditorActorSystem>( false );
-        EditorTargetSystem::Get()->RemoveCursor();
     }
 }
 
@@ -73,7 +67,6 @@ void EditorActorSystem::OnEditorBack( map::EditorBackEvent const& Evt )
         {
             EnableSubsystems( false );
             Ui::Get().Load( "editor_actor_hud" );
-            EditorTargetSystem::Get()->RemoveCursor();
             EditorHudState::Get().SetHudShown( true );
         }
     }
@@ -81,9 +74,6 @@ void EditorActorSystem::OnEditorBack( map::EditorBackEvent const& Evt )
 
 void EditorActorSystem::EnableSubsystems( bool enable )
 {
-    ::engine::Engine::Get().SetEnabled<EditorGridSystem>( enable );
-    ::engine::Engine::Get().SetEnabled<EditorTargetSystem>( true );
-    ::engine::Engine::Get().SetEnabled<EditorBrushSystem>( enable );
 }
 
 } // namespace map

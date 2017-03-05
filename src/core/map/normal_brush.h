@@ -10,10 +10,8 @@ class NormalBrush: public IBrush
 {
 public:
     NormalBrush( int32_t Id );
-    virtual void Update( double DeltaTime );
-protected:
-    bool mMouseLeftPressed;
-    bool mMouseRightPressed;
+    virtual void CreateTarget();
+    virtual void RemoveTarget();
 };
 
 } // namespace map

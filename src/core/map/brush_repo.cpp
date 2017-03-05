@@ -19,7 +19,12 @@ BrushRepo::BrushRepo()
 }
 
 
-void DefaultBrush::Update( double DeltaTime )
+void DefaultBrush::CreateTarget()
+{
+
+}
+
+void DefaultBrush::RemoveTarget()
 {
 
 }

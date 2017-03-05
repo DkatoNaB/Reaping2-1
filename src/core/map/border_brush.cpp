@@ -7,8 +7,8 @@
 #include "../position_component.h"
 #include "editor_target_system.h"
 #include "../i_collision_component.h"
-#include "editor_grid_system.h"
 #include "matrix_grid.h"
+#include "grid_repo.h"
 #include "neighbors.h"
 #include "../border_type.h"
 #include "../i_border_component.h"
@@ -16,65 +16,57 @@
 #include "../scene.h"
 namespace map {
 
-    BorderBrush::BorderBrush( int32_t Id )
-        : IBrush( Id )
-        , mMouseLeftPressed( false )
-        , mMouseRightPressed( false )
-    {
-    }
-
-void BorderBrush::Update( double DeltaTime )
+BorderBrush::BorderBrush( int32_t Id )
+    : IBrush( Id )
 {
-    return;
+}
+
+void BorderBrush::CreateTarget()
+{
+    LL() << "Create tgt";
+    auto& grid = GridRepo::Get()( AutoId("matrix") );
     if ( !EditorTargetSystem::Get()->GetCursor().IsValid() )
     {
         return;
     }
     RemoveWhenUsedRAII( false );
-    if ( mMouseLeftPressed && !engine::Engine::Get().GetSystem<MouseSystem>()->IsButtonPressed( MouseSystem::Button_Left ) )
+    Neighbors neighbors = grid.GetNeighbors( EditorTargetSystem::Get()->GetCursorPosition(), EditorTargetSystem::Get()->GetCursor()->GetId() );
+    IBorderComponent::Borders_t borders = neighbors.GetBorders( Neighbors::GetNeighborDirs() );
+    IBorderComponent::Borders_t outerBorders = neighbors.GetBorders( Neighbors::GetNeighborOuterDirs() );
+    LL() << borders.size() << outerBorders.size();
+
+    EditorTargetSystem::Get()->PutTarget( EditorTargetSystem::Get()->GetCursorPosition(), borders, outerBorders );
+    Opt<engine::System> spawnActorMES( engine::Engine::Get().GetSystem<SpawnActorMapElementSystem>() );
+    spawnActorMES->Update( 0 );
+    mScene.InsertNewActors();
+    UpdateBorders( neighbors );
+}
+
+void BorderBrush::RemoveTarget()
+{
+    auto& grid = GridRepo::Get()( AutoId("matrix") );
+    if ( !EditorTargetSystem::Get()->GetCursor().IsValid() )
     {
-        Neighbors neighbors = EditorGridSystem::Get()->GetGrid().GetNeighbors( EditorTargetSystem::Get()->GetCursorPosition(), EditorTargetSystem::Get()->GetCursor()->GetId() );
-        IBorderComponent::Borders_t borders = neighbors.GetBorders( Neighbors::GetNeighborDirs() );
-        IBorderComponent::Borders_t outerBorders = neighbors.GetBorders( Neighbors::GetNeighborOuterDirs() );
-
-        EditorTargetSystem::Get()->PutTarget( EditorTargetSystem::Get()->GetCursorPosition(), borders, outerBorders );
-        Opt<engine::System> spawnActorMES( engine::Engine::Get().GetSystem<SpawnActorMapElementSystem>() );
-        spawnActorMES->Update( 0 );
-        mScene.InsertNewActors();
-        UpdateBorders( neighbors );
-
-        mMouseLeftPressed = false;
+        return;
     }
-    else if ( engine::Engine::Get().GetSystem<MouseSystem>()->IsButtonPressed( MouseSystem::Button_Left ) )
-    {
-        mMouseLeftPressed = true;
-    }
+    RemoveWhenUsedRAII( false );
+    std::vector<int32_t> removeActors = GetActorsToRemove();
 
-    if ( mMouseRightPressed && !engine::Engine::Get().GetSystem<MouseSystem>()->IsButtonPressed( MouseSystem::Button_Right ) )
+    for ( std::vector<int32_t>::iterator i = removeActors.begin(), e = removeActors.end(); i != e; ++i )
     {
-        std::vector<int32_t> removeActors = GetActorsToRemove();
-
-        for ( std::vector<int32_t>::iterator i = removeActors.begin(), e = removeActors.end(); i != e; ++i )
+        Opt<Actor> actor( mScene.GetActor( *i ) );
+        Opt<IPositionComponent> positionC = actor->Get<IPositionComponent>();
+        int32_t actorId = actor->GetId();
+        glm::vec2 actorPos( 0.0 );
+        if ( positionC.IsValid() )
         {
-            Opt<Actor> actor( mScene.GetActor( *i ) );
-            Opt<IPositionComponent> positionC = actor->Get<IPositionComponent>();
-            int32_t actorId = actor->GetId();
-            glm::vec2 actorPos( 0.0 );
-            if ( positionC.IsValid() )
-            {
-                actorPos = glm::vec2( positionC->GetX(), positionC->GetY() );
-            }
-            mScene.RemoveActor( *i );
-            MapSystem::Get()->RemoveMapElement( *i );
-            mScene.InsertNewActors();
-            Neighbors neighbors = EditorGridSystem::Get()->GetGrid().GetNeighbors( actorPos, actorId );
-            UpdateBorders( neighbors );
+            actorPos = glm::vec2( positionC->GetX(), positionC->GetY() );
         }
-        mMouseRightPressed = false;
-    }
-    else if ( engine::Engine::Get().GetSystem<MouseSystem>()->IsButtonPressed( MouseSystem::Button_Right ) )
-    {
-        mMouseRightPressed = true;
+        mScene.RemoveActor( *i );
+        MapSystem::Get()->RemoveMapElement( *i );
+        mScene.InsertNewActors();
+        Neighbors neighbors = grid.GetNeighbors( actorPos, actorId );
+        UpdateBorders( neighbors );
     }
 }
 
@@ -96,7 +88,8 @@ void BorderBrush::UpdateBorders( Neighbors& neighbors )
             continue;
         }
         glm::vec2 neighborPos = glm::vec2( positionC->GetX(), positionC->GetY() );
-        Neighbors neighbors2 = EditorGridSystem::Get()->GetGrid().GetNeighbors( neighborPos, actor->GetId() );
+        auto& grid = GridRepo::Get()( AutoId("matrix") );
+        Neighbors neighbors2 = grid.GetNeighbors( neighborPos, actor->GetId() );
         IBorderComponent::Borders_t borders2 = neighbors2.GetBorders( Neighbors::GetNeighborDirs() );
         IBorderComponent::Borders_t outerBorders2 = neighbors2.GetBorders( Neighbors::GetNeighborOuterDirs() );
         removeActors.push_back( i->mActorGUID );

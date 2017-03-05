@@ -7,7 +7,6 @@
 #include "../position_component.h"
 #include "editor_target_system.h"
 #include "../i_collision_component.h"
-#include "editor_grid_system.h"
 #include "ctf_soldier_spawn_point_map_element.h"
 #include "editor_soldier_spawn_system.h"
 #include "../i_team_component.h"

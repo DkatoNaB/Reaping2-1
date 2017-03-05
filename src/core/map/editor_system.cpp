@@ -133,6 +133,7 @@ void EditorSystem::Load( std::string const& level )
     Ui::Get().Load( "editor_base_hud" );
     EditorHudState::Get().SetHudShown( false );
     mAutoSaveOn = true;
+    ::engine::Engine::Get().SetEnabled<EditorTargetSystem>( true );
 }
 
 double const& EditorSystem::GetX() const

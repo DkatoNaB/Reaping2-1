@@ -7,7 +7,6 @@
 #include "../position_component.h"
 #include "editor_target_system.h"
 #include "../i_collision_component.h"
-#include "editor_grid_system.h"
 #include "respawn_actor_map_element.h"
 #include "../pickup_collision_component.h"
 #include "../item_type.h"

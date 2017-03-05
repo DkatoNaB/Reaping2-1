@@ -1,16 +1,20 @@
 #include "platform/i_platform.h"
 #include "editor_target_system.h"
 #include "engine/engine.h"
-#include "../i_position_component.h"
+#include "core/i_position_component.h"
 #include "ui/ui.h"
-#include "../i_collision_component.h"
-#include <boost/assign/std/vector.hpp>
+#include "core/i_collision_component.h"
 #include "editor_back_event.h"
 #include "target_repo.h"
 #include "pickup_target.h"
 #include "wall_target.h"
 #include "editor_hud_state.h"
+#include "grid_repo.h"
+#include "brush_repo.h"
+#include "core/renderable_layer.h"
+#include "map_system.h"
 #include <imgui.h>
+#include <boost/assign/std/vector.hpp>
 
 namespace {
 
@@ -80,7 +84,7 @@ EditorTargetSystem::EditorTargetSystem()
     , mTargetRepo( TargetRepo::Get() )
     , mTargetId( -1 )
     , mCursorPosition( 0.0, 0.0 )
-    , mCursor( NULL )
+    , mCursorGuid( -1 )
     , mNextUID( AutoId( "spawn_at_start" ) )
 {
 }
@@ -89,29 +93,9 @@ EditorTargetSystem::EditorTargetSystem()
 void EditorTargetSystem::Init()
 {
     mMouseClickId = EventServer<WorldMouseReleaseEvent>::Get().Subscribe( boost::bind( &EditorTargetSystem::OnMouseClickEvent, this, _1 ) );
+    mOnWorldMouseMove = EventServer< ::WorldMouseMoveEvent>::Get().Subscribe( boost::bind( &EditorTargetSystem::OnWorldMouseMoveEvent, this, _1 ) );
+    mKeyId = EventServer<KeyEvent>::Get().Subscribe( boost::bind( &EditorTargetSystem::OnKeyEvent, this, _1 ) );
 
-    ModelValue& editorModel = const_cast<ModelValue&>( RootModel::Get()["editor"] );
-    mEditorModels.push_back( new ModelValue( "target", &editorModel ) );
-    ModelValue& targetModel = mEditorModels.back();
-    mEditorModels.push_back( new ModelValue( "pickups", &targetModel) );
-    ModelValue& pickupModel = mEditorModels.back();
-    // for the menus
-    // pickups
-    mEditorModels.push_back( new ModelValue( (ModelValue::get_int_vec_t) boost::bind( &EditorTargetSystem::Guns, this ), "guns", &pickupModel ) );
-    mEditorModels.push_back( new ModelValue( (ModelValue::get_int_vec_t) boost::bind( &EditorTargetSystem::Buffs, this ), "buffs", &pickupModel ) );
-    mEditorModels.push_back( new ModelValue( (ModelValue::get_int_vec_t) boost::bind( &EditorTargetSystem::Items, this ), "items", &pickupModel ) );
-    // targets
-    mEditorModels.push_back( new ModelValue( (ModelValue::get_int_vec_t) boost::bind( &EditorTargetSystem::MapItems, this ), "mapitems", &targetModel ) );
-    mEditorModels.push_back( new ModelValue( (ModelValue::get_int_vec_t) boost::bind( &EditorTargetSystem::Spawnpoints, this ), "spawnpoints", &targetModel ) );
-    // spawn point teams are ambigous, so use background colors
-    mEditorModels.push_back( new ModelValue( (ModelValue::get_int_vec_t) boost::bind( &EditorTargetSystem::SpawnpointBackground, this ), "teamcolor", &targetModel) );
-    // for the menu actions
-    mEditorModels.push_back( new ModelValue( IntFunc( this, boost::bind(&EditorTargetSystem::TargetChanged,this,"spawnpoint",_2) ), "spawntarget", &editorModel ) );
-    mEditorModels.push_back( new ModelValue( IntFunc( this, boost::bind(&EditorTargetSystem::TargetChanged,this,"mapitem",_2) ), "mapitemtarget", &editorModel ) );
-    mEditorModels.push_back( new ModelValue( IntFunc( this, boost::bind(&EditorTargetSystem::TargetChanged,this,"gun",_2) ), "guntarget", &editorModel ) );
-    mEditorModels.push_back( new ModelValue( IntFunc( this, boost::bind(&EditorTargetSystem::TargetChanged,this,"buff",_2) ), "bufftarget", &editorModel ) );
-    mEditorModels.push_back( new ModelValue( IntFunc( this, boost::bind(&EditorTargetSystem::TargetChanged,this,"item",_2) ), "itemtarget", &editorModel ) );
-    
     /// ------ Pickups ------
     // guns
     CollectPickupAutoids("weapon", mGunActorIds);
@@ -161,10 +145,10 @@ void EditorTargetSystem::Init()
 void EditorTargetSystem::Update( double DeltaTime )
 {
     GetTarget().Update( DeltaTime );
-    mCursor = mScene.GetActor( mCursorGuid );
-    if ( mCursor.IsValid() )
+    auto Cursor = mScene.GetActor( mCursorGuid );
+    if ( Cursor.IsValid() )
     {
-        Opt<IPositionComponent> positionC( mCursor->Get<IPositionComponent>() );
+        Opt<IPositionComponent> positionC( Cursor->Get<IPositionComponent>() );
         if ( positionC.IsValid() )
         {
             positionC->SetX( mCursorPosition.x );
@@ -214,32 +198,25 @@ void EditorTargetSystem::Update( double DeltaTime )
         "snap to grid",
     };
     ImGui::Combo( "positioning", &mPositioning, pos, 2 );
-    char const* layers[] = {
-        "any",
-        "target",
-    };
-    ImGui::Combo( "select layer", &mSelectLayer, layers, 2 );
+    ImGui::Separator();
+    auto& rl( RenderableLayer::Get() );
+    auto const& layers = rl.GetNameToPriorityMap();
+    if( mLayers.size() != layers.size() )
+    {
+        mLayers.resize( layers.size() );
+    }
+    int cnt = 0;
+    for( auto const& ly : layers )
+    {
+        ImGui::Checkbox( ly.first.c_str(), &mLayers[ cnt ].b );
+        ++cnt;
+    }
     ImGui::End();
 
 }
 
-void EditorTargetSystem::TargetChanged( std::string const& targetType, int32_t targetIdx )
-{
-    RemoveCursor();
-    auto it = mTargetActorIdsMap.find( targetType );
-    if ( it == mTargetActorIdsMap.end() )
-    {
-        return;
-    }
-    mTargetId = it->second[targetIdx];
-    AddCursor();
-
-    EventServer<EditorBackEvent>::Get().SendEvent( EditorBackEvent() );
-}
-
 EditorTargetSystem::~EditorTargetSystem()
 {
-    mEditorModels.clear();
 }
 
 Opt<EditorTargetSystem> EditorTargetSystem::Get()
@@ -265,7 +242,7 @@ void EditorTargetSystem::SetCursorPosition( double x, double y )
 
 Opt<Actor> EditorTargetSystem::GetCursor() const
 {
-    return mCursor;
+    return mScene.GetActor( mCursorGuid );
 }
 
 double EditorTargetSystem::GetCursorRadius() const
@@ -336,16 +313,16 @@ void EditorTargetSystem::PutTarget( glm::vec2 position, IBorderComponent::Border
 
 void EditorTargetSystem::RemoveCursor()
 {
-    if (mCursor.IsValid())
+    if (mCursorGuid>0)
     {
-        mScene.RemoveActor( mCursor->GetGUID() );
+        mScene.RemoveActor( mCursorGuid );
     }
-    mCursor.Reset();
+    mCursorGuid = -1;
 }
 
 void EditorTargetSystem::AddCursor()
 {
-    if (mTargetId == -1 || mCursor.IsValid())
+    if (mTargetId == -1 || mCursorGuid > 0)
     {
         return;
     }
@@ -358,7 +335,6 @@ void EditorTargetSystem::AddCursor()
     }
     mCursorGuid = cursor->GetGUID();
     mScene.AddActor( cursor.release() );
-    mCursor = mScene.GetActor( mCursorGuid );
 }
 
 void EditorTargetSystem::OnMouseClickEvent( const WorldMouseReleaseEvent& Event )
@@ -367,11 +343,70 @@ void EditorTargetSystem::OnMouseClickEvent( const WorldMouseReleaseEvent& Event 
     {
         return;
     }
+    auto& brush = BrushRepo::Get()( mBrush == 0 ? AutoId( "normal" ) : AutoId( "border" ) );
     if( Event.Button == engine::MouseSystem::Button_Left )
     {
-        PutTarget( Event.Pos );
+        LL() << "Create target";
+        brush.CreateTarget();
+    }
+    else if( Event.Button == engine::MouseSystem::Button_Right )
+    {
+        static Opt<engine::KeyboardSystem> keyboard = ::engine::Engine::Get().GetSystem<engine::KeyboardSystem>();
+        EditorSelection::Mode m = EditorSelection::ClearAndSelect;
+        if (keyboard->GetKey( GLFW_KEY_LEFT_CONTROL ).State == KeyState::Down
+            || keyboard->GetKey( GLFW_KEY_RIGHT_CONTROL ).State == KeyState::Down)
+        {
+            m = EditorSelection::Remove;
+        }
+        else if (keyboard->GetKey( GLFW_KEY_LEFT_SHIFT ).State == KeyState::Down
+            || keyboard->GetKey( GLFW_KEY_RIGHT_SHIFT ).State == KeyState::Down)
+        {
+            m = EditorSelection::Add;
+        }
+        std::vector<int32_t> lys;
+        auto& rl( RenderableLayer::Get() );
+        auto const& layers = rl.GetNameToPriorityMap();
+        int cnt = 0;
+        std::for_each( layers.begin(), layers.end(), [&]( std::pair<std::string,int32_t> const& p )
+                {
+                    if( mLayers[cnt].b )
+                    {
+                        lys.push_back( p.second );
+                    }
+                    ++cnt;
+                });
+        mSelection.SelectActors( Event.Pos, Event.Pos, lys, m );
     }
 }
+
+void EditorTargetSystem::OnWorldMouseMoveEvent( ::WorldMouseMoveEvent const& Evt )
+{
+    auto& grid = GridRepo::Get()( mPositioning == 0 ? AutoId("absolute") : AutoId("matrix") );
+    grid.SetMousePosition( Evt.Pos.x, Evt.Pos.y );
+    SetCursorPosition( grid.GetProcessedPosition().x, grid.GetProcessedPosition().y );
+}
+
+void EditorTargetSystem::OnKeyEvent( const KeyEvent& Event )
+{
+    if (!mEnabled)
+    {
+        return;
+    }
+    if( Event.Key == GLFW_KEY_DELETE )
+    {
+        auto const& selected = mSelection.GetSelectedActors();
+        mSelection.ClearSelection();
+        auto mapSystem = MapSystem::Get();
+        for (auto&& actorid : selected)
+        {
+            mScene.RemoveActor( actorid );
+            mapSystem->RemoveMapElement( actorid );
+        }
+    }
+}
+
+
+
 
 } // namespace map
 

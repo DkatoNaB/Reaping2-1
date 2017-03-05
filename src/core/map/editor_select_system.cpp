@@ -1,9 +1,7 @@
 #include "platform/i_platform.h"
 #include "editor_select_system.h"
 #include "ui/ui.h"
-#include "editor_grid_system.h"
 #include "editor_target_system.h"
-#include "editor_brush_system.h"
 #include "../../engine/engine.h"
 #include "../../input/keyboard.h"
 #include "editor_hud_state.h"
@@ -43,6 +41,7 @@ void EditorSelectSystem::Init()
 
 void EditorSelectSystem::Update(double DeltaTime)
 {
+    return;
     if (!mEnabled)
     {
         return;

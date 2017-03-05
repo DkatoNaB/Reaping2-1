@@ -79,8 +79,6 @@
 #include "core/map/respawn_actor_map_element_system.h"
 #include "core/map/editor_system.h"
 #include "core/map/editor_target_system.h"
-#include "core/map/editor_grid_system.h"
-#include "core/map/editor_brush_system.h"
 #include "core/map/editor_soldier_spawn_system.h"
 #include "network/shot_message.h"
 #include "network/kill_score_message.h"
@@ -294,8 +292,6 @@ void SystemFactory::Init()
     Bind( AutoId( "kill_score_system" ), &CreateSystem<engine::KillScoreSystem> );
 
     Bind( AutoId( "editor_target_system" ), &CreateSystem<map::EditorTargetSystem> );
-    Bind( AutoId( "editor_grid_system" ), &CreateSystem<map::EditorGridSystem> );
-    Bind( AutoId( "editor_brush_system" ), &CreateSystem<map::EditorBrushSystem> );
     Bind( AutoId( "editor_soldier_spawn_system" ), &CreateSystem<map::EditorSoldierSpawnSystem> );
     Bind( AutoId( "editor_layer_system" ), &CreateSystem<map::EditorLayerSystem> );
     Bind( AutoId( "editor_actor_system" ), &CreateSystem<map::EditorActorSystem> );

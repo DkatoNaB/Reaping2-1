@@ -11,7 +11,8 @@ class DefaultBrush: public IBrush
 {
 public:
     DefaultBrush();
-    virtual void Update( double DeltaTime );
+    void CreateTarget();
+    void RemoveTarget();
 };
 
 class BrushRepo : public platform::Repository<IBrush>, public platform::Singleton<BrushRepo>

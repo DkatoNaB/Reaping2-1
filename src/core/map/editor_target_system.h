@@ -7,6 +7,8 @@
 #include "target_repo.h"
 #include "../actor_factory.h"
 #include "input/mouse.h"
+#include "input/keyboard.h"
+#include "editor_selection.h"
 
 namespace map {
 
@@ -34,17 +36,21 @@ protected:
 private:
     Scene& mScene;
     TargetRepo& mTargetRepo;
+    EditorSelection mSelection;
 
     bool mEditorMode = false;
     int mTargetType = 0;
     int mTarget = 0;
     int mBrush = 0;
     int mPositioning = 0;
-    int mSelectLayer = 0;
+    struct wrapped_bool
+    {
+        bool b = true;
+    };
+    std::vector<wrapped_bool> mLayers;
 
     int32_t mTargetId;
     glm::vec2 mCursorPosition;
-    Opt<Actor> mCursor;
     int32_t mCursorGuid = -1;
     int32_t mNextUID;
 
@@ -66,13 +72,15 @@ private:
     std::vector<int32_t> MapItems();
     std::vector<int32_t> Spawnpoints();
     std::vector<int32_t> SpawnpointBackground();
-    boost::ptr_vector<ModelValue> mEditorModels;
-    void TargetChanged( std::string const& targetType, int32_t targetIdx );
-
 
     void OnMouseClickEvent( const WorldMouseReleaseEvent& Event );
     AutoReg mMouseClickId;
 
+    AutoReg mOnWorldMouseMove;
+    void OnWorldMouseMoveEvent( const WorldMouseMoveEvent& Event );
+
+    AutoReg mKeyId;
+    void OnKeyEvent( const KeyEvent& Event );
 };
 
 } // namespace map

@@ -213,8 +213,6 @@ DetonateOnHitSystem
 DropOnDeathSystem
 Editor
 EditorActorSystem
-EditorBrushSystem
-EditorGridSystem
 EditorGroupSystem
 EditorLayerSystem
 EditorRenderableLayerSystem
@@ -222,7 +220,6 @@ EditorSelectSystem
 EditorSoldierSpawnSystem
 EditorSystem
 EditorTargetSystem
-EditorUiSystem
 EditorVisibilitySystem
 ExplodeOnDeathSystem
 ExplodeOnHitSystem
@@ -703,7 +700,6 @@ buffs_engine/cloak_buff_sub_system.h
 buffs_engine/heal_over_time_buff_sub_system.h
 buffs_engine/max_health_buff_sub_system.h
 buffs_engine/move_speed_buff_sub_system.h
-bufftarget
 bullets
 bump_map
 bump_map_mp
@@ -985,8 +981,6 @@ core/map/ctf_spawn_flags_map_element_system.h
 core/map/ctf_spawn_soldiers_map_element.h
 core/map/ctf_spawn_soldiers_map_element_system.h
 core/map/editor_actor_system.h
-core/map/editor_brush_system.h
-core/map/editor_grid_system.h
 core/map/editor_group_system.h
 core/map/editor_layer.h
 core/map/editor_layer_system.h
@@ -995,7 +989,6 @@ core/map/editor_select_system.h
 core/map/editor_soldier_spawn_system.h
 core/map/editor_system.h
 core/map/editor_target_system.h
-core/map/editor_ui_system.h
 core/map/editor_visiblity_system.h
 core/map/group_map_element.h
 core/map/group_map_element_system.h
@@ -1250,10 +1243,6 @@ editor_actor_system.h
 editor_back_event
 editor_back_event.h
 editor_base_hud
-editor_brush_system
-editor_brush_system.h
-editor_grid_system
-editor_grid_system.h
 editor_group
 editor_group_system
 editor_group_system.h
@@ -1273,13 +1262,13 @@ editor_select
 editor_select_hud
 editor_select_system
 editor_select_system.h
+editor_selection.h
 editor_soldier_spawn_system
 editor_soldier_spawn_system.h
 editor_system
 editor_system.h
 editor_target_system
 editor_target_system.h
-editor_ui_system.h
 editor_visibility
 editor_visibility_system
 editor_visiblity_system.h
@@ -1560,8 +1549,6 @@ guard_controller_component.h
 guard_controller_sub_system
 guard_plasma_gun
 gun
-guns
-guntarget
 h
 halign
 handled
@@ -1794,7 +1781,6 @@ item_loader_repo.h
 item_properties_changed_event
 item_type
 item_type.h
-items
 items/blue_grenade_normal_item_sub_system.h
 items/cloak_normal_item_sub_system.h
 items/flash_normal_item_sub_system.h
@@ -1806,7 +1792,6 @@ items/lucky_rocket_weapon_subsystem.h
 items/rusty_reaper_weapon_sub_system.h
 items/shotgun_weapon_sub_system.h
 items/weapon_item_sub_system.h
-itemtarget
 iteration
 iteration_variance
 joint_sprite_collection
@@ -1934,8 +1919,6 @@ mandatory_rooms
 map
 map-editorModeChanged
 map-levelGenerated
-map/editor_brush_system.h
-map/editor_grid_system.h
 map/editor_soldier_spawn_system.h
 map/editor_system.h
 map/editor_target_system.h
@@ -1969,14 +1952,11 @@ map_start_message_sender_system
 map_system
 map_system.h
 mapitem
-mapitems
-mapitemtarget
 mapping.h
 maps
 maptype
 material
 matrix
-matrix","absolute
 matrix_grid.h
 maxShadow
 max_health_buff
@@ -2195,7 +2175,6 @@ pickup_message.h
 pickup_message_handler_sub_system
 pickup_message_sender_system
 pickup_target.h
-pickups
 ping
 ping_message.h
 ping_message_handler_sub_system
@@ -2635,8 +2614,6 @@ spawn_soldiers_map_element.h
 spawn_soldiers_map_element_system
 spawn_soldiers_map_element_system.h
 spawnpoint
-spawnpoints
-spawntarget
 special
 speed
 speed_loss_percent
@@ -2685,8 +2662,6 @@ stop_on_death_system
 stop_on_death_system.h
 strafe
 strafe_act.h
-style
-styles
 sunlight
 switch
 switch_cells
@@ -2733,7 +2708,6 @@ team_switch_request_message
 team_switch_request_message.h
 team_switch_request_message_handler_sub_system
 team_switch_request_message_sender_system
-teamcolor
 template
 test/desert.png
 test/desert.tga

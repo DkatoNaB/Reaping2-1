@@ -7,53 +7,32 @@
 #include "../position_component.h"
 #include "editor_target_system.h"
 #include "../i_collision_component.h"
-#include "editor_grid_system.h"
 #include "spawn_actor_map_element_system.h"
 #include "engine/system.h"
 namespace map {
 
 NormalBrush::NormalBrush( int32_t Id )
     : IBrush( Id )
-    , mMouseLeftPressed( false )
-    , mMouseRightPressed( false )
 {
 
 }
 
-void NormalBrush::Update( double DeltaTime )
+void NormalBrush::CreateTarget()
 {
-    return;
-    if ( !EditorTargetSystem::Get()->GetCursor().IsValid() )
-    {
-        return;
-    }
-    if ( mMouseLeftPressed && !engine::Engine::Get().GetSystem<MouseSystem>()->IsButtonPressed( MouseSystem::Button_Left ) )
-    {
-        RemoveWhenUsedRAII( false );
-        EditorTargetSystem::Get()->PutTarget( EditorTargetSystem::Get()->GetCursorPosition() );
-        Opt<engine::System> spawnActorMES( engine::Engine::Get().GetSystem<SpawnActorMapElementSystem>() );
-        spawnActorMES->Update( 0 );
-        mMouseLeftPressed = false;
-    }
-    else if ( engine::Engine::Get().GetSystem<MouseSystem>()->IsButtonPressed( MouseSystem::Button_Left ) )
-    {
-        mMouseLeftPressed = true;
-    }
+    RemoveWhenUsedRAII( false );
+    EditorTargetSystem::Get()->PutTarget( EditorTargetSystem::Get()->GetCursorPosition() );
+    Opt<engine::System> spawnActorMES( engine::Engine::Get().GetSystem<SpawnActorMapElementSystem>() );
+    spawnActorMES->Update( 0 );
+}
 
-    if ( mMouseRightPressed && !engine::Engine::Get().GetSystem<MouseSystem>()->IsButtonPressed( MouseSystem::Button_Right ) )
-    {
-        std::vector<int32_t> removeActors = GetActorsToRemove();
+void NormalBrush::RemoveTarget()
+{
+    std::vector<int32_t> removeActors = GetActorsToRemove();
 
-        for ( std::vector<int32_t>::iterator i = removeActors.begin(), e = removeActors.end(); i != e; ++i )
-        {
-            mScene.RemoveActor( *i );
-            MapSystem::Get()->RemoveMapElement( *i );
-        }
-        mMouseRightPressed = false;
-    }
-    else if ( engine::Engine::Get().GetSystem<MouseSystem>()->IsButtonPressed( MouseSystem::Button_Right ) )
+    for ( std::vector<int32_t>::iterator i = removeActors.begin(), e = removeActors.end(); i != e; ++i )
     {
-        mMouseRightPressed = true;
+        mScene.RemoveActor( *i );
+        MapSystem::Get()->RemoveMapElement( *i );
     }
 }
 

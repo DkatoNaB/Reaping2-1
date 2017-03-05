@@ -64,7 +64,6 @@
 #include "platform/game_clock.h"
 #include "platform/folder_package.h"
 #include "engine/system_suppressor.h"
-#include "core/map/editor_ui_system.h"
 
 using engine::Engine;
 namespace {
@@ -333,8 +332,6 @@ int main( int argc, char* argv[] )
         Eng.AddSystem( AutoId( "room_editor_system" ) );
 
         Eng.AddSystem( AutoId( "editor_target_system" ) );
-        Eng.AddSystem( AutoId( "editor_grid_system" ) );
-        Eng.AddSystem( AutoId( "editor_brush_system" ) );
         Eng.AddSystem( AutoId( "editor_soldier_spawn_system" ) );
         Eng.AddSystem( AutoId( "editor_layer_system" ) );
         Eng.AddSystem( AutoId( "editor_actor_system" ) );
@@ -350,7 +347,6 @@ int main( int argc, char* argv[] )
         Eng.AddSystem( AutoId( "cell_entrance_editor_system" ) );
         Eng.AddSystem( AutoId( "room_plain_property_editor_system" ) );
 
-        Eng.AddSystem( AutoId( "EditorUiSystem" ) );
     }
 
     if ( programState.mMode != ProgramState::Client )

@@ -73,6 +73,12 @@ private:
     void OnEditorBack( map::EditorBackEvent const& Evt );
     AutoReg mOnPhaseChanged;
     void OnPhaseChanged( PhaseChangedEvent const& Evt );
+
+    int mCellSize = 4;
+    int mCellCount = 1;
+    bool mEnd = false;
+    bool mStart = false;
+    bool mKey = false;
 };
 
 } // namespace map

@@ -34,6 +34,7 @@
 #include "room_editor_loaded_event.h"
 #include "cell_entrance_editor_system.h"
 #include "level_generator/spawn_property.h"
+#include <imgui.h>
 
 namespace map {
 
@@ -210,6 +211,22 @@ void RoomEditorSystem::Update( double DeltaTime )
     {
         SwitchToModeSelect();
     }
+
+    {
+        mRoomDesc.SetCellCount( mCellCount );
+        mRoomDesc.SetCellSize( mCellSize * 100 );
+    }
+
+
+    bool shown = true;
+    ImGui::Begin( "Room Editor", &shown );
+    ImGui::DragInt( "cell size", &mCellSize, 1.0f, 4, 20 );
+    ImGui::DragInt( "cell count", &mCellCount, 1.0f, 1, 20 );
+    ImGui::Separator();
+    ImGui::Checkbox( "end", &mEnd );
+    ImGui::Checkbox( "start", &mStart );
+    ImGui::Checkbox( "key", &mKey );
+    ImGui::End();
 }
 void RoomEditorSystem::OnScreenMouseMove( ::ScreenMouseMoveEvent const& Evt )
 {

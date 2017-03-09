@@ -333,6 +333,14 @@ void EditorTargetSystem::AddCursor()
         positionC->SetX( mCursorPosition.x );
         positionC->SetY( mCursorPosition.y );
     }
+    Opt<IRenderableComponent> renderableC( cursor->Get<IRenderableComponent>() );
+    if (renderableC.IsValid())
+    {
+        auto& rl( RenderableLayer::Get() );
+        auto const& layers = rl.GetNameToPriorityMap();
+        auto it = layers.find( "editor_objects" );
+        renderableC->SetLayerPriority( it == layers.end() ? 0 : it->second );
+    }
     mCursorGuid = cursor->GetGUID();
     mScene.AddActor( cursor.release() );
 }

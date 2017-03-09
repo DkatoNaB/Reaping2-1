@@ -5,7 +5,7 @@
         [
             {"name":"position_component"},
             {"name":"renderable_component",
-                "set":[{"layer":"buildings"}]
+                "set":[{"layer":"editor_objects"}]
             },
             {"name":"collision_component",
                 "set":[{"class":"no_collision", "radius":300}]

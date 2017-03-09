@@ -74,8 +74,13 @@ private:
     AutoReg mOnPhaseChanged;
     void OnPhaseChanged( PhaseChangedEvent const& Evt );
 
+    std::vector<int32_t> mCellGUIDs;
+    void AddCells();
+
     int mCellSize = 4;
     int mCellCount = 1;
+    int mPrevCellSize = 0;
+    int mPrevCellCount = 0;
     bool mEnd = false;
     bool mStart = false;
     bool mKey = false;

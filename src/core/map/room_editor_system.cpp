@@ -13,6 +13,7 @@
 #include "respawn_actor_map_element_system.h"
 #include "ctf_flag_spawn_point_map_element.h"
 #include "../i_renderable_component.h"
+#include "../actor_factory.h"
 #include "input/keyboard_adapter_system.h"
 #include <boost/assign/std/vector.hpp>
 #include "level_generator/room_repo.h"
@@ -33,6 +34,7 @@
 #include "editor_group_system.h"
 #include "room_editor_loaded_event.h"
 #include "cell_entrance_editor_system.h"
+#include "../i_cell_component.h"
 #include "level_generator/spawn_property.h"
 #include <imgui.h>
 
@@ -90,6 +92,52 @@ void RoomEditorSystem::OnEditorBack( map::EditorBackEvent const& Evt )
         {
             Ui::Get().Load( "room_editor_base_hud" );
             EditorHudState::Get().SetHudShown( false );
+        }
+    }
+}
+
+void RoomEditorSystem::AddCells()
+{
+    if( mPrevCellSize == mCellSize &&
+        mPrevCellCount == mCellCount )
+    {
+        return;
+    }
+    mPrevCellSize = mCellSize;
+    mPrevCellCount = mCellCount;
+
+    static ActorFactory& actorFactory = ActorFactory::Get();
+    static int32_t cellId = AutoId( "cell" );
+    for (auto cellGUID : mCellGUIDs)
+    {
+        mScene.RemoveActor( cellGUID );
+    }
+    mCellGUIDs.clear();
+    for (int32_t y = 0; y < mRoomDesc.GetCellCount(); ++y)
+    {
+        for (int32_t x = 0; x < mRoomDesc.GetCellCount(); ++x)
+        {
+            std::auto_ptr<Actor> cellActor( actorFactory( cellId ) );
+            Opt<IPositionComponent> positionC( cellActor->Get<IPositionComponent>() );
+            if (positionC.IsValid())
+            {
+                positionC->SetX( mRoomDesc.GetCellSize() * x + mRoomDesc.GetCellSize() / 2 );
+                positionC->SetY( mRoomDesc.GetCellSize() * y + mRoomDesc.GetCellSize() / 2 );
+            }
+            auto CellC( cellActor->Get<ICellComponent>() );
+            mCellGUIDs.push_back( cellActor->GetGUID() );
+            if (CellC.IsValid())
+            {
+                CellC->SetRoomDesc( &mRoomDesc );
+                CellC->SetX( x );
+                CellC->SetY( y );
+            }
+            auto collisionC( cellActor->Get<ICollisionComponent>() );
+            if (collisionC.IsValid())
+            {
+                collisionC->SetRadius( mRoomDesc.GetCellSize() / 2 );
+            }
+            mScene.AddActor( cellActor.release() );
         }
     }
 }
@@ -215,6 +263,7 @@ void RoomEditorSystem::Update( double DeltaTime )
     {
         mRoomDesc.SetCellCount( mCellCount );
         mRoomDesc.SetCellSize( mCellSize * 100 );
+        AddCells();
     }
 
 

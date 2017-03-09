@@ -1255,6 +1255,7 @@ editor_layer_system
 editor_layer_system.h
 editor_mode_changed_event
 editor_mode_changed_event.h
+editor_objects
 editor_plain_prop
 editor_renderable_layer_system
 editor_renderable_layer_system.h

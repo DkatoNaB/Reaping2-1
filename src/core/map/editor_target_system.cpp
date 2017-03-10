@@ -13,6 +13,7 @@
 #include "brush_repo.h"
 #include "core/renderable_layer.h"
 #include "map_system.h"
+#include "core/actor_factory.h"
 #include <imgui.h>
 #include <boost/assign/std/vector.hpp>
 
@@ -145,16 +146,22 @@ void EditorTargetSystem::Init()
 void EditorTargetSystem::Update( double DeltaTime )
 {
     GetTarget().Update( DeltaTime );
-    auto Cursor = mScene.GetActor( mCursorGuid );
-    if ( Cursor.IsValid() )
+    auto updatePos = [&]( int32_t id )->void
     {
-        Opt<IPositionComponent> positionC( Cursor->Get<IPositionComponent>() );
-        if ( positionC.IsValid() )
+        auto Cursor = mScene.GetActor( id );
+        if ( Cursor.IsValid() )
         {
-            positionC->SetX( mCursorPosition.x );
-            positionC->SetY( mCursorPosition.y );
+            Opt<IPositionComponent> positionC( Cursor->Get<IPositionComponent>() );
+            if ( positionC.IsValid() )
+            {
+                positionC->SetX( mCursorPosition.x );
+                positionC->SetY( mCursorPosition.y );
+            }
         }
-    }
+    };
+    AddActiveCursor();
+    updatePos( mCursorGuid );
+    updatePos( mActiveCursorGuid );
 
     if (!mEnabled)
     {
@@ -318,6 +325,23 @@ void EditorTargetSystem::RemoveCursor()
         mScene.RemoveActor( mCursorGuid );
     }
     mCursorGuid = -1;
+}
+
+void EditorTargetSystem::AddActiveCursor()
+{
+    if( mScene.GetActor( mActiveCursorGuid ).IsValid() )
+    {
+        return;
+    }
+    auto cursor = ActorFactory::Get()( AutoId( "editor_cursor" ) );
+    Opt<IPositionComponent> positionC( cursor->Get<IPositionComponent>() );
+    if (positionC.IsValid())
+    {
+        positionC->SetX( mCursorPosition.x );
+        positionC->SetY( mCursorPosition.y );
+    }
+    mActiveCursorGuid = cursor->GetGUID();
+    mScene.AddActor( cursor.release() );
 }
 
 void EditorTargetSystem::AddCursor()

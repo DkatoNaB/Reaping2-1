@@ -34,6 +34,8 @@ protected:
     virtual void Init();
     virtual void Update( double DeltaTime );
 private:
+    void AddActiveCursor();
+private:
     Scene& mScene;
     TargetRepo& mTargetRepo;
     EditorSelection mSelection;
@@ -52,6 +54,7 @@ private:
     int32_t mTargetId;
     glm::vec2 mCursorPosition;
     int32_t mCursorGuid = -1;
+    int32_t mActiveCursorGuid = -1;
     int32_t mNextUID;
 
     std::vector<int32_t> mGunVisualIds;

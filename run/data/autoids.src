@@ -1243,6 +1243,7 @@ editor_actor_system.h
 editor_back_event
 editor_back_event.h
 editor_base_hud
+editor_cursor
 editor_group
 editor_group_system
 editor_group_system.h

@@ -1,0 +1,19 @@
+[
+    {
+        "name":"editor_cursor",
+        "components":
+        [
+            {"name":"position_component"},
+            {"name":"renderable_component",
+                "set":[{"layer":"editor_objects"}]
+            },
+            {"name":"collision_component",
+                "set":[{"class":"no_collision", "radius":300}]
+            },
+            {"name":"activity_component",
+                "set":[{"radius":2000}]
+            }
+        ]
+    }
+]
+

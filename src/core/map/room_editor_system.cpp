@@ -202,7 +202,7 @@ void RoomEditorSystem::Load( std::string const& room )
     mAutoSaveOn = true;
     EventServer<LevelGeneratedEvent>::Get().SendEvent( LevelGeneratedEvent( LevelGeneratedEvent::TerrainGenerated ) );
     EventServer<RoomEditorLoadedEvent>::Get().SendEvent( RoomEditorLoadedEvent(&mRoomDesc) );
-    SwitchToModeSelect();
+//    SwitchToModeSelect();
 }
 
 double const& RoomEditorSystem::GetX() const

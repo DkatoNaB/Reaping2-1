@@ -113,9 +113,6 @@
 -a1
 -a3
 -a4
-.cell.actor
-.map_elements.json
-.renderable_layers.json
 0x00000000
 0x00000044
 0x00007777
@@ -865,6 +862,7 @@ editor/all_spawns
 editor_actor_hud
 editor_base_hud
 editor_brush_select
+editor_cursor
 editor_grid_select
 editor_group.group_selected
 editor_group.groups

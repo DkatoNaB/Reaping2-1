@@ -17,7 +17,6 @@ SpritePhaseCache::SpritePhaseCache()
     mRowSize = std::floor( mTargetSize.x / mMaxCellSize );
     L1( "Texture size: %d x %d\n", (int)mTargetSize.x, (int)mTargetSize.y );
     rt.SetTargetTexture( mTarget, mTargetSize );
-    rt.SelectTargetTexture( current );
     mTargetTexId = rt.GetTextureId( mTarget );
     mVAO.Init();
     mVAO.Bind();
@@ -28,6 +27,7 @@ SpritePhaseCache::SpritePhaseCache()
     glVertexAttribPointer( 0, 2, GL_FLOAT, GL_FALSE, 0, 0 );
     glVertexAttribPointer( 1, 2, GL_FLOAT, GL_FALSE, 0, ( void* )( TotalSize ) );
     mVAO.Unbind();
+    rt.SelectTargetTexture( current );
 }
 
 glm::vec4 SpritePhaseCache::FindFreeRegion( SpritePhase const& sprphase )
@@ -214,6 +214,7 @@ void SpritePhaseCache::ProcessPending()
         return;
     }
     static RenderTarget& rt( RenderTarget::Get() );
+    uint32_t current = rt.GetCurrentTarget();
     rt.SelectTargetTexture( mTarget );
     glEnable( GL_TEXTURE_2D );
     glEnable( GL_BLEND );
@@ -263,6 +264,7 @@ void SpritePhaseCache::ProcessPending()
     mVAO.Unbind();
     glActiveTexture( GL_TEXTURE0 );
     mPending.clear();
+    rt.SelectTargetTexture( current );
 }
 }
 

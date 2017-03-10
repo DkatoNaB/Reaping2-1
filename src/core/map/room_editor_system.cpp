@@ -96,10 +96,20 @@ void RoomEditorSystem::OnEditorBack( map::EditorBackEvent const& Evt )
     }
 }
 
+void RoomEditorSystem::RemoveCells()
+{
+    for (auto cellGUID : mCellGUIDs)
+    {
+        mScene.RemoveActor( cellGUID );
+    }
+    mCellGUIDs.clear();
+}
+
 void RoomEditorSystem::AddCells()
 {
     if( mPrevCellSize == mCellSize &&
-        mPrevCellCount == mCellCount )
+        mPrevCellCount == mCellCount &&
+        !mCellGUIDs.empty() )
     {
         return;
     }
@@ -108,11 +118,7 @@ void RoomEditorSystem::AddCells()
 
     static ActorFactory& actorFactory = ActorFactory::Get();
     static int32_t cellId = AutoId( "cell" );
-    for (auto cellGUID : mCellGUIDs)
-    {
-        mScene.RemoveActor( cellGUID );
-    }
-    mCellGUIDs.clear();
+    RemoveCells();
     for (int32_t y = 0; y < mRoomDesc.GetCellCount(); ++y)
     {
         for (int32_t x = 0; x < mRoomDesc.GetCellCount(); ++x)
@@ -202,7 +208,8 @@ void RoomEditorSystem::Load( std::string const& room )
     mAutoSaveOn = true;
     EventServer<LevelGeneratedEvent>::Get().SendEvent( LevelGeneratedEvent( LevelGeneratedEvent::TerrainGenerated ) );
     EventServer<RoomEditorLoadedEvent>::Get().SendEvent( RoomEditorLoadedEvent(&mRoomDesc) );
-//    SwitchToModeSelect();
+    mCellSize = mRoomDesc.GetCellSize() / 100;
+    mCellCount = mRoomDesc.GetCellCount();
 }
 
 double const& RoomEditorSystem::GetX() const
@@ -263,14 +270,23 @@ void RoomEditorSystem::Update( double DeltaTime )
     {
         mRoomDesc.SetCellCount( mCellCount );
         mRoomDesc.SetCellSize( mCellSize * 100 );
-        AddCells();
+        if( mShowCells )
+        {
+            AddCells();
+        }
+        else
+        {
+            RemoveCells();
+        }
     }
 
 
     bool shown = true;
     ImGui::Begin( "Room Editor", &shown );
-    ImGui::DragInt( "cell size", &mCellSize, 1.0f, 4, 20 );
-    ImGui::DragInt( "cell count", &mCellCount, 1.0f, 1, 20 );
+    ImGui::Checkbox( "show cells", &mShowCells );
+    ImGui::Separator();
+    ImGui::DragInt( "cell size", &mCellSize, 0.05f, 4, 20 );
+    ImGui::DragInt( "cell count", &mCellCount, 0.05f, 1, 20 );
     ImGui::Separator();
     ImGui::Checkbox( "end", &mEnd );
     ImGui::Checkbox( "start", &mStart );

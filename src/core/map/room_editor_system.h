@@ -76,6 +76,7 @@ private:
 
     std::vector<int32_t> mCellGUIDs;
     void AddCells();
+    void RemoveCells();
 
     int mCellSize = 4;
     int mCellCount = 1;
@@ -84,6 +85,7 @@ private:
     bool mEnd = false;
     bool mStart = false;
     bool mKey = false;
+    bool mShowCells = false;
 };
 
 } // namespace map

@@ -123,16 +123,8 @@
 #include "core/map/room_editor_system.h"
 #include "core/map/editor_layer_system.h"
 #include "core/map/editor_actor_system.h"
-#include "core/map/room_cell_editor_system.h"
-#include "core/map/editor_select_system.h"
 #include "core/map/editor_group_system.h"
-#include "core/map/editor_visiblity_system.h"
 #include "core/map/editor_renderable_layer_system.h"
-#include "core/map/property_editor_system.h"
-#include "core/map/room_start_editor_system.h"
-#include "core/map/room_end_editor_system.h"
-#include "core/map/spawn_editor_system.h"
-#include "core/map/cell_entrance_editor_system.h"
 #include "core/map/room_plain_property_editor_system.h"
 #include "level_end_system.h"
 #include "recreate_borders_map_element_system.h"
@@ -295,16 +287,8 @@ void SystemFactory::Init()
     Bind( AutoId( "editor_soldier_spawn_system" ), &CreateSystem<map::EditorSoldierSpawnSystem> );
     Bind( AutoId( "editor_layer_system" ), &CreateSystem<map::EditorLayerSystem> );
     Bind( AutoId( "editor_actor_system" ), &CreateSystem<map::EditorActorSystem> );
-    Bind( AutoId( "room_cell_editor_system" ), &CreateSystem<map::RoomCellEditorSystem> );
-    Bind( AutoId( "editor_select_system" ), &CreateSystem<map::EditorSelectSystem> );
     Bind( AutoId( "editor_group_system" ), &CreateSystem<map::EditorGroupSystem> );
-    Bind( AutoId( "editor_visibility_system" ), &CreateSystem<map::EditorVisibilitySystem> );
     Bind( AutoId( "editor_renderable_layer_system" ), &CreateSystem<map::EditorRenderableLayerSystem> );
-    Bind( AutoId( "property_editor_system" ), &CreateSystem<map::PropertyEditorSystem> );
-    Bind( AutoId( "room_start_editor_system" ), &CreateSystem<map::RoomStartEditorSystem> );
-    Bind( AutoId( "room_end_editor_system" ), &CreateSystem<map::RoomEndEditorSystem> );
-    Bind( AutoId( "spawn_editor_system" ), &CreateSystem<map::SpawnEditorSystem> );
-    Bind( AutoId( "cell_entrance_editor_system" ), &CreateSystem<map::CellEntranceEditorSystem> );
     Bind( AutoId( "room_plain_property_editor_system" ), &CreateSystem<map::RoomPlainPropertyEditorSystem> );
 
     Bind( AutoId( "worm_head_system" ), &CreateSystem<engine::WormHeadSystem> );

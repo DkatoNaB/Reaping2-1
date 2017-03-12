@@ -32,6 +32,12 @@ protected:
     void SwitchToModeSelect();
 
 private:
+    EntranceType::Type GetEntranceType( glm::vec2 pos );
+    Opt<Cell> GetCellFromScene( glm::vec2 pos );
+    void SwitchCellFilledState( glm::vec2 pos );
+    void SwitchEntranceState( glm::vec2 pos, EntranceType::Type entrance );
+
+private:
     Scene& mScene;
     ModelValue mEditorModel;
     ModelValue mLevelModel;
@@ -64,13 +70,14 @@ private:
     void OnScreenMouseMove( ::ScreenMouseMoveEvent const& Evt );
     AutoReg mKeyId;
     void OnKeyEvent( const KeyEvent& Event );
+    void OnMouseClickEvent( const WorldMouseReleaseEvent& Event );
+    AutoReg mMouseClickId;
+
 
     FrequencyTimer mTimer;
     bool mAutoSaveOn;
     RoomDesc mRoomDesc;
     int32_t mRoomId;
-    AutoReg mOnEditorBack;
-    void OnEditorBack( map::EditorBackEvent const& Evt );
     AutoReg mOnPhaseChanged;
     void OnPhaseChanged( PhaseChangedEvent const& Evt );
 

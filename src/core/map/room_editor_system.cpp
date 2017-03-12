@@ -12,8 +12,8 @@
 #include "respawn_actor_map_element.h"
 #include "respawn_actor_map_element_system.h"
 #include "ctf_flag_spawn_point_map_element.h"
-#include "../i_renderable_component.h"
-#include "../actor_factory.h"
+#include "core/i_renderable_component.h"
+#include "core/actor_factory.h"
 #include "input/keyboard_adapter_system.h"
 #include <boost/assign/std/vector.hpp>
 #include "level_generator/room_repo.h"
@@ -28,13 +28,11 @@
 #include "editor_system.h"
 #include "editor_mode_changed_event.h"
 #include "editor_hud_state.h"
-#include "room_cell_editor_system.h"
 #include "group_map_element.h"
-#include "editor_select_system.h"
 #include "editor_group_system.h"
+#include "editor_mode.h"
 #include "room_editor_loaded_event.h"
-#include "cell_entrance_editor_system.h"
-#include "../i_cell_component.h"
+#include "core/i_cell_component.h"
 #include "level_generator/spawn_property.h"
 #include <imgui.h>
 
@@ -63,11 +61,11 @@ RoomEditorSystem::RoomEditorSystem()
 void RoomEditorSystem::Init()
 {
     mKeyboard =::engine::Engine::Get().GetSystem<engine::KeyboardSystem>();
+    mMouseClickId = EventServer<WorldMouseReleaseEvent>::Get().Subscribe( boost::bind( &RoomEditorSystem::OnMouseClickEvent, this, _1 ) );
     mOnScreenMouseMove = EventServer< ::ScreenMouseMoveEvent>::Get().Subscribe( boost::bind( &RoomEditorSystem::OnScreenMouseMove, this, _1 ) );
     mWindow = engine::Engine::Get().GetSystem<engine::WindowSystem>();
     mRenderer = engine::Engine::Get().GetSystem<engine::RendererSystem>();
     mKeyId = EventServer<KeyEvent>::Get().Subscribe( boost::bind( &RoomEditorSystem::OnKeyEvent, this, _1 ) );
-    mOnEditorBack = EventServer<map::EditorBackEvent>::Get().Subscribe( boost::bind( &RoomEditorSystem::OnEditorBack, this, _1 ) );
     mOnPhaseChanged = EventServer<PhaseChangedEvent>::Get().Subscribe( boost::bind( &RoomEditorSystem::OnPhaseChanged, this, _1 ) );
     using namespace boost::assign;
     auto& idStorage = IdStorage::Get();
@@ -80,18 +78,6 @@ void RoomEditorSystem::Init()
             {
                 mLevelNames += name;
             }
-        }
-    }
-}
-
-void RoomEditorSystem::OnEditorBack( map::EditorBackEvent const& Evt )
-{
-    if (mEnabled)
-    {
-        if (Evt.mBackToBaseHud)
-        {
-            Ui::Get().Load( "room_editor_base_hud" );
-            EditorHudState::Get().SetHudShown( false );
         }
     }
 }
@@ -431,6 +417,88 @@ void RoomEditorSystem::NewRoom()
         Load( newRoomName );
         Save();
     }
+}
+
+void RoomEditorSystem::OnMouseClickEvent( const WorldMouseReleaseEvent& Event )
+{
+    if( !mEnabled )
+    {
+        return;
+    }
+    if( EditorMode::Get().GetMode() == EditorMode::Entrances )
+    {
+        SwitchEntranceState( Event.Pos, GetEntranceType(Event.Pos) );
+    }
+    if( EditorMode::Get().GetMode() == EditorMode::CellFill )
+    {
+        SwitchCellFilledState( Event.Pos );
+    }
+}
+
+Opt<Cell> RoomEditorSystem::GetCellFromScene( glm::vec2 pos )
+{
+    Opt<Cell> r;
+    if (pos.x < 0 || pos.y < 0)
+    {
+        return r;
+    }
+    int32_t x = pos.x / mRoomDesc.GetCellSize();
+    int32_t y = pos.y / mRoomDesc.GetCellSize();
+    if (x >= mRoomDesc.GetCellCount() || y >= mRoomDesc.GetCellCount())
+    {
+        return r;
+    }
+    r = &mRoomDesc.GetCell( x, y );
+    return r;
+}
+
+void RoomEditorSystem::SwitchEntranceState( glm::vec2 pos, EntranceType::Type entrance )
+{
+    Opt<Cell> cell = GetCellFromScene( pos );
+    if (cell.IsValid())
+    {
+        if (cell->HasEntrance( entrance ))
+        {
+            cell->RemoveEntrance( entrance );
+        }
+        else
+        {
+            cell->AddEntrance( entrance );
+        }
+    }
+}
+
+void RoomEditorSystem::SwitchCellFilledState( glm::vec2 pos )
+{
+    Opt<Cell> cell = GetCellFromScene( pos );
+    if (cell.IsValid())
+    {
+        cell->SetFilled( !cell->IsFilled() );
+    }
+}
+
+EntranceType::Type RoomEditorSystem::GetEntranceType( glm::vec2 pos )
+{
+    int32_t x = (int)pos.x%mRoomDesc.GetCellSize();
+    int32_t y = (int)pos.y%mRoomDesc.GetCellSize();
+    if (x < mRoomDesc.GetCellSize()*0.3)
+    {
+        return EntranceType::Left;
+    }
+    else if (x > mRoomDesc.GetCellSize()*0.7)
+    {
+        return  EntranceType::Right;
+    }
+    if (y < mRoomDesc.GetCellSize()*0.3)
+    {
+        return  EntranceType::Bottom;
+    }
+    else if (y > mRoomDesc.GetCellSize()*0.7)
+    {
+        return  EntranceType::Top;
+    }
+
+    return EntranceType::Left;
 }
 
 

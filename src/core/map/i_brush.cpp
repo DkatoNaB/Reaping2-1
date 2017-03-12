@@ -4,7 +4,6 @@
 #include "editor_target_system.h"
 #include "editor_system.h"
 #include "editor_layer_system.h"
-#include "editor_visiblity_system.h"
 
 namespace map {
 
@@ -41,7 +40,7 @@ std::vector<int32_t> IBrush::GetActorsToRemove()
              && std::abs( positionC->GetY() - mousePos.y ) < collisionC->GetRadius() )
         {
             Opt<IRenderableComponent> renderableC( actor.Get<IRenderableComponent>() );
-            if (renderableC.IsValid() && renderableC->GetColor() != EditorVisibilitySystem::InvisibleColor
+            if (renderableC.IsValid()
                 && ( editorLayer == EditorLayer::Any
                    || ( editorLayer == EditorLayer::Target
                       && cursorRenderableC.IsValid()

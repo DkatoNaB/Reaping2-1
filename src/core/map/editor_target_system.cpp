@@ -14,6 +14,7 @@
 #include "core/renderable_layer.h"
 #include "map_system.h"
 #include "core/actor_factory.h"
+#include "editor_mode.h"
 #include <imgui.h>
 #include <boost/assign/std/vector.hpp>
 
@@ -170,6 +171,8 @@ void EditorTargetSystem::Update( double DeltaTime )
 
     bool shown = true;
     ImGui::Begin( "Editor", &shown );
+    EditorMode::Get().DrawSelector();  
+    ImGui::Separator();
     char const* targettypes[] = {
         "spawnpoint",
         "mapitem",
@@ -375,6 +378,10 @@ void EditorTargetSystem::OnMouseClickEvent( const WorldMouseReleaseEvent& Event 
     {
         return;
     }
+    if( EditorMode::Get().GetMode() != EditorMode::Actors )
+    {
+        return;
+    }
     auto& brush = BrushRepo::Get()( mBrush == 0 ? AutoId( "normal" ) : AutoId( "border" ) );
     if( Event.Button == engine::MouseSystem::Button_Left )
     {
@@ -421,6 +428,10 @@ void EditorTargetSystem::OnWorldMouseMoveEvent( ::WorldMouseMoveEvent const& Evt
 void EditorTargetSystem::OnKeyEvent( const KeyEvent& Event )
 {
     if (!mEnabled)
+    {
+        return;
+    }
+    if( EditorMode::Get().GetMode() != EditorMode::Actors )
     {
         return;
     }

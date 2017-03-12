@@ -6,6 +6,7 @@
 #include "core/i_controller_component.h"
 #include "platform/auto_id.h"
 #include "inventory_component.h"
+#include "core/program_state.h"
 #include "core/i_renderable_component.h"
 #include "core/renderable_layer.h"
 #include "core/i_drop_on_death_component.h"
@@ -21,7 +22,8 @@ Actor::Actor( int32_t Id )
     , mId( Id )
 {
     static int32_t NextGuid = 0;
-    mGUID = ++NextGuid;
+    static int32_t mask = core::ProgramState::Get().mIsClient ? 0x10000000 : 0;
+    mGUID = mask | ++NextGuid;
 }
 
 Actor::Actor()

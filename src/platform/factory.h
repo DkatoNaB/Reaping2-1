@@ -3,8 +3,11 @@
 
 #include <memory>
 #include "rstdint.h"
+#include "id_storage.h"
 #include <boost/function.hpp>
 #include <map>
+#include <vector>
+#include <string>
 #include <boost/static_assert.hpp>
 #include <boost/type_traits/is_base_of.hpp>
 #include <boost/bind.hpp>
@@ -18,6 +21,8 @@ public:
     virtual ~Factory();
     virtual std::auto_ptr<Return_T> operator()( int32_t Id ) const;
     virtual std::auto_ptr<Return_T> operator()( int32_t Id ); // lazy load
+    virtual std::vector<int32_t> Keys() const;
+    virtual std::vector<std::string> KeyStrings() const;
 protected:
     typedef Factory<Return_T> FactoryBase;
     typedef boost::function<std::auto_ptr<Return_T>( int32_t )> Functor_t;
@@ -33,6 +38,26 @@ protected:
     static std::auto_ptr<Return_T> Create( int32_t Id );
 };
 
+template<typename Return_T>
+std::vector<int32_t> Factory<Return_T>::Keys() const
+{
+    std::vector<int32_t> rv;
+    std::transform( mElements.begin(), mElements.end(), std::back_inserter( rv ),
+            []( typename ElementMap_t::value_type const& p ) { return p.first; } );
+    return rv;
+}
+
+template<typename Return_T>
+std::vector<std::string> Factory<Return_T>::KeyStrings() const
+{
+    std::vector<std::string> rv;
+    IdStorage& idstorage( IdStorage::Get() );
+    std::string name;
+    std::transform( mElements.begin(), mElements.end(), std::back_inserter( rv ),
+            [&]( typename ElementMap_t::value_type const& p ) { return idstorage.GetName( p.first, name ) ? name : "<unknown autoid>"; } );
+    return rv;
+}
+    
 template<typename Return_T>
 Factory<Return_T>::~Factory()
 {

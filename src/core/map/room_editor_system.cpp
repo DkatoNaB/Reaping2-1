@@ -34,6 +34,7 @@
 #include "room_editor_loaded_event.h"
 #include "core/i_cell_component.h"
 #include "level_generator/spawn_property.h"
+#include "property_editor.h"
 #include <imgui.h>
 
 namespace map {
@@ -278,6 +279,8 @@ void RoomEditorSystem::Update( double DeltaTime )
     ImGui::Checkbox( "start", &mStart );
     ImGui::Checkbox( "key", &mKey );
     ImGui::End();
+
+    PropertyEditor::Get().DrawUI();
 }
 void RoomEditorSystem::OnScreenMouseMove( ::ScreenMouseMoveEvent const& Evt )
 {

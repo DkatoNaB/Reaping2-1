@@ -402,6 +402,7 @@ PositionMessage
 PositionMessageHandlerSubSystem
 PositionMessageSenderSystem
 ProjMtx
+Property
 PulseSystem
 Pulses_t-pulses
 RanBro
@@ -1812,6 +1813,7 @@ level_generator/json_room.h
 level_generator/level_generated_event.h
 level_generator/level_generated_map_element.h
 level_generator/level_generator_map_element.h
+level_generator/property_factory.h
 level_generator/room_desc.h
 level_generator/room_repo.h
 level_generator/spawn_property.h
@@ -2216,6 +2218,7 @@ prop_selected
 prop_states
 properties
 property
+property_editor.h
 property_editor_base_system
 property_editor_system
 property_factory

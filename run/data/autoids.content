@@ -116,6 +116,7 @@
 .cell.actor
 .map_elements.json
 .renderable_layers.json
+.room.json
 0x00000000
 0x00000044
 0x00007777

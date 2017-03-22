@@ -496,6 +496,8 @@ WeaponItemSubSystem
 WindowSystem
 WormBodySystem
 WormHeadSystem
+X:
+Y:
 YES
 [%f]
 \n

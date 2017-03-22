@@ -26,6 +26,7 @@ private:
     Opt<RoomDesc> mRoomDesc;
     /// cache for existing properties in the room (?)
     void DrawExistingProperties();
+    void DrawSelectedPropertySettings();
     void CreateNewProperty();
     /// the currently selected property (index?)
     int mCurrentProperty = 0;

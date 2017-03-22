@@ -285,6 +285,10 @@ void RoomEditorSystem::Update( double DeltaTime )
 }
 void RoomEditorSystem::OnScreenMouseMove( ::ScreenMouseMoveEvent const& Evt )
 {
+    if (!EditorTargetSystem::Get()->EdgeScrollAllowed())
+    {
+        return;
+    }
     int w, h;
     mWindow->GetWindowSize( w, h );
     mCurrentMovement = 0;

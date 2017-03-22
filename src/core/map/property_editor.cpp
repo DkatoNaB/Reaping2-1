@@ -27,11 +27,23 @@ void PropertyEditor::DrawUI()
         CreateNewProperty();
     }
 
-    ImGui::Separator();
     DrawExistingProperties();
-    ImGui::Separator();
+
+    DrawSelectedPropertySettings();
 
     ImGui::End();
+}
+
+void PropertyEditor::DrawSelectedPropertySettings()
+{
+    if (!mRoomDesc.IsValid())
+    {
+        return;
+    }
+    ImGui::Separator();
+    auto& props = mRoomDesc->GetRoom()->GetProperties();
+    auto& prop = props.at( mCurrentProperty );
+    prop.DrawUI();
 }
 
 void PropertyEditor::DrawExistingProperties()
@@ -40,6 +52,7 @@ void PropertyEditor::DrawExistingProperties()
     {
         return;
     }
+    ImGui::Separator();
     auto const& props = mRoomDesc->GetRoom()->GetProperties();
     std::vector<std::string> strprops;
     for (auto const& prop : props)

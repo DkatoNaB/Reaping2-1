@@ -221,6 +221,8 @@ void EditorTargetSystem::Update( double DeltaTime )
         ImGui::Checkbox( ly.first.c_str(), &mLayers[ cnt ].b );
         ++cnt;
     }
+    ImGui::Separator();
+    ImGui::Checkbox( "edge scroll", &mEdgeScrollAllowed );
     ImGui::End();
 
 }
@@ -448,7 +450,10 @@ void EditorTargetSystem::OnKeyEvent( const KeyEvent& Event )
     }
 }
 
-
+bool EditorTargetSystem::EdgeScrollAllowed() const
+{
+    return mEdgeScrollAllowed;
+}
 
 
 } // namespace map

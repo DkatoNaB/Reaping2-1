@@ -30,6 +30,7 @@ public:
     void PutTarget( glm::vec2 position, IBorderComponent::Borders_t& borders, IBorderComponent::Borders_t& outerBorders );
     void RemoveCursor();
     void AddCursor();
+    bool EdgeScrollAllowed() const;
 protected:
     virtual void Init();
     virtual void Update( double DeltaTime );
@@ -56,6 +57,7 @@ private:
     int32_t mCursorGuid = -1;
     int32_t mActiveCursorGuid = -1;
     int32_t mNextUID;
+    bool mEdgeScrollAllowed = false;
 
     std::vector<int32_t> mGunVisualIds;
     std::vector<int32_t> mGunActorIds;

@@ -1,6 +1,6 @@
 #include "core/map/level_generator/cell_entrance_property.h"
 #include "spawn_property.h"
-
+#include <imgui.h>
 
 namespace map {
 
@@ -139,6 +139,21 @@ CellEntranceProperty::Targets_t const& CellEntranceProperty::GetEntranceTargets(
     return mEntranceTargets;
 }
 
+void CellEntranceProperty::DrawUI()
+{
+    IProperty::DrawUI();
+    ImGui::Separator();
+    ImGui::InputInt( "X:", &mX ); 
+    ImGui::InputInt( "Y:", &mY ); 
+    ImGui::Separator();
+    ImGui::Button( "Select blocked targets" );
+    ImGui::Button( "Add to blocked targets" );
+    ImGui::Button( "Remove from blocked targets" );
+    ImGui::Separator();
+    ImGui::Button( "Select entrance targets" );
+    ImGui::Button( "Add to entrance targets" );
+    ImGui::Button( "Remove from entrance targets" );
+}
 
 void CellEntranceProperty::Generate( RoomDesc& roomDesc, MapElementHolder& mMapElementHolder, glm::vec2 pos, bool editor /*= false*/ )
 {

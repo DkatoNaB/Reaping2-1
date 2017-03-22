@@ -1,4 +1,5 @@
 #include "core/map/level_generator/i_property.h"
+#include <imgui.h>
 
 namespace map {
 
@@ -34,6 +35,26 @@ int32_t IProperty::GetId() const
 int IProperty::GetType() const
 {
     return 0;
+}
+
+void IProperty::DrawUI()
+{
+    int32_t id = GetId();
+    int32_t uid = GetUID();
+    int32_t type = GetType();
+    std::string idstr;
+    std::string typestr;
+    static platform::IdStorage& ids(platform::IdStorage::Get());
+    std::string name;
+    if (ids.GetName(id, idstr) && ids.GetName(type, typestr))
+    {
+        name = idstr + "(" + typestr + ")";
+    }
+    else
+    {
+        name = "<no id>";
+    }
+    ImGui::Text( "Prop: %s", name.c_str() );
 }
 
 void IProperty::Generate( RoomDesc& roomDesc, MapElementHolder& mMapElementHolder, glm::vec2 pos, bool editor/*= false*/)

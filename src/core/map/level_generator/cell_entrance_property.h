@@ -26,6 +26,7 @@ public:
     void SetEntranceTargets( Targets_t entranceTargets );
     Targets_t const& GetEntranceTargets() const;
     virtual void Generate( RoomDesc& roomDesc, MapElementHolder& mMapElementHolder, glm::vec2 pos, bool editor = false );
+    virtual void DrawUI();
 private:
     int32_t mX;
     int32_t mY;

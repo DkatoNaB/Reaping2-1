@@ -197,6 +197,7 @@ void RoomEditorSystem::Load( std::string const& room )
     EventServer<RoomEditorLoadedEvent>::Get().SendEvent( RoomEditorLoadedEvent(&mRoomDesc) );
     mCellSize = mRoomDesc.GetCellSize() / 100;
     mCellCount = mRoomDesc.GetCellCount();
+    PropertyEditor::Get().SetRoomDesc( &mRoomDesc );
 }
 
 double const& RoomEditorSystem::GetX() const

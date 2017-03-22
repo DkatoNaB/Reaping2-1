@@ -6,6 +6,7 @@
 %s
 %s\n
 '\n
+(
 (%f,%f)
 )
 +
@@ -1061,6 +1062,7 @@ corpses.h
 count
 counter.h
 cover
+create
 create_actor
 create_actor_message.h
 create_actor_message_handler_sub_system

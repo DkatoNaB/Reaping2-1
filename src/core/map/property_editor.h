@@ -2,6 +2,7 @@
 #define INCLUDED_MAP_PROPERTY_EDITOR_H
 
 #include "platform/singleton.h"
+#include "level_generator/room_desc.h"
 
 namespace map {
 class PropertyEditor : public platform::Singleton<PropertyEditor>
@@ -19,11 +20,13 @@ public:
     ///     prop-specific ui, implemented in the prop itself (dirs,pos,actor list)
     ///     (pick cell)
     void DrawUI();
+    void SetRoomDesc( RoomDesc* desc );
 private:
     /// var for keeping track of the edited room
-    //Opt<IRoom> mRoom;
+    Opt<RoomDesc> mRoomDesc;
     /// cache for existing properties in the room (?)
     void DrawExistingProperties();
+    void CreateNewProperty();
     /// the currently selected property (index?)
     int mCurrentProperty = 0;
     int mNewPropType = 0;

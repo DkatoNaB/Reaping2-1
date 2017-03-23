@@ -40,6 +40,7 @@
 #include "core/capture_the_flag_game_mode_system.h"
 #include "render/particle_system.h"
 #include "render/light_system.h"
+#include "core/map/editor_camera_system.h"
 #include "network/server_system.h"
 #include "network/client_system.h"
 #include "core/buffs/armor_buff.h"
@@ -330,6 +331,7 @@ int main( int argc, char* argv[] )
         Eng.AddSystem( AutoId( "local_system" ) );
         Eng.AddSystem( AutoId( "editor_system" ) );
         Eng.AddSystem( AutoId( "room_editor_system" ) );
+        Eng.AddSystem( AutoId( "EditorCameraSystem" ) );
 
         Eng.AddSystem( AutoId( "editor_target_system" ) );
         Eng.AddSystem( AutoId( "editor_soldier_spawn_system" ) );

@@ -46,10 +46,6 @@ private:
     ModelValue mModeModel;
     ModelValue mSaveModel;
     ModelValue mNewRoomModel;
-    double mX;
-    double mY;
-    double const& GetX() const;
-    double const& GetY() const;
     boost::ptr_vector<ModelValue> mPlayerModels;
     std::string mRoomName;
     std::vector<std::string> mLevelNames;
@@ -63,11 +59,8 @@ private:
     void ModeSelect( std::string const& mode );
 
     std::string mEditorMode;
-    uint32_t mCurrentMovement;
     Opt<engine::RendererSystem> mRenderer;
     Opt<engine::WindowSystem> mWindow;
-    AutoReg mOnScreenMouseMove;
-    void OnScreenMouseMove( ::ScreenMouseMoveEvent const& Evt );
     AutoReg mKeyId;
     void OnKeyEvent( const KeyEvent& Event );
     void OnMouseClickEvent( const WorldMouseReleaseEvent& Event );

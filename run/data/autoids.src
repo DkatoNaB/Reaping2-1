@@ -25,6 +25,7 @@
 .
 ...
 ../../../Reaping2_build/build/tools/classgenerator/classgenerator
+../../../build-reap/bin/classgenerator
 ../../actor_factory.h
 ../../build-reap-release/bin/relwithdebinfo/classgenerator
 ../../build-reap/bin/classgenerator
@@ -212,6 +213,7 @@ DetonateOnHitSystem
 DropOnDeathSystem
 Editor
 EditorActorSystem
+EditorCameraSystem
 EditorGroupSystem
 EditorLayerSystem
 EditorRenderableLayerSystem
@@ -967,6 +969,7 @@ core/map/ctf_spawn_flags_map_element_system.h
 core/map/ctf_spawn_soldiers_map_element.h
 core/map/ctf_spawn_soldiers_map_element_system.h
 core/map/editor_actor_system.h
+core/map/editor_camera_system.h
 core/map/editor_group_system.h
 core/map/editor_layer.h
 core/map/editor_layer_system.h
@@ -1211,6 +1214,8 @@ editor_actor_system.h
 editor_back_event
 editor_back_event.h
 editor_base_hud
+editor_camera_system
+editor_camera_system.h
 editor_cursor
 editor_group
 editor_group_system

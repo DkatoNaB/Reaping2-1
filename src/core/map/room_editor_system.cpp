@@ -35,6 +35,7 @@
 #include "core/i_cell_component.h"
 #include "level_generator/spawn_property.h"
 #include "property_editor.h"
+#include "editor_camera_system.h"
 #include <imgui.h>
 
 namespace map {
@@ -48,11 +49,8 @@ RoomEditorSystem::RoomEditorSystem()
     , mModeModel( StringFunc( this, &RoomEditorSystem::ModeSelect ), "mode", &mEditorModel )
     , mSaveModel( VoidFunc( this, &RoomEditorSystem::Save ), "save", &mEditorModel )
     , mNewRoomModel( VoidFunc( this, &RoomEditorSystem::NewRoom ), "new_room", &mEditorModel )
-    , mX( 0 )
-    , mY( 0 )
     , mRoomName()
     , mEditorMode()
-    , mCurrentMovement( 0 )
     , mTimer()
     , mAutoSaveOn( false )
 {
@@ -63,7 +61,6 @@ void RoomEditorSystem::Init()
 {
     mKeyboard =::engine::Engine::Get().GetSystem<engine::KeyboardSystem>();
     mMouseClickId = EventServer<WorldMouseReleaseEvent>::Get().Subscribe( boost::bind( &RoomEditorSystem::OnMouseClickEvent, this, _1 ) );
-    mOnScreenMouseMove = EventServer< ::ScreenMouseMoveEvent>::Get().Subscribe( boost::bind( &RoomEditorSystem::OnScreenMouseMove, this, _1 ) );
     mWindow = engine::Engine::Get().GetSystem<engine::WindowSystem>();
     mRenderer = engine::Engine::Get().GetSystem<engine::RendererSystem>();
     mKeyId = EventServer<KeyEvent>::Get().Subscribe( boost::bind( &RoomEditorSystem::OnKeyEvent, this, _1 ) );
@@ -150,12 +147,11 @@ void RoomEditorSystem::Load( std::string const& room )
 {
     engine::Engine::Get().GetSystem<SpawnActorMapElementSystem>()->SetRemoveMapElementWhenUsed( false );
     mRoomName = room;
-    mX = 0;
-    mY = 0;
     ModelValue& PlayerModel = const_cast<ModelValue&>( RootModel::Get()["player"] );
     mPlayerModels.clear();
-    mPlayerModels.push_back( new ModelValue( GetDoubleFunc( this, &RoomEditorSystem::GetX ), "x", &PlayerModel ) );
-    mPlayerModels.push_back( new ModelValue( GetDoubleFunc( this, &RoomEditorSystem::GetY ), "y", &PlayerModel ) );
+    auto&& editorCameraS = EditorCameraSystem::Get();
+    mPlayerModels.push_back( new ModelValue( GetDoubleFunc( editorCameraS.Get(), &EditorCameraSystem::GetX ), "x", &PlayerModel ) );
+    mPlayerModels.push_back( new ModelValue( GetDoubleFunc( editorCameraS.Get(), &EditorCameraSystem::GetY ), "y", &PlayerModel ) );
 
     mRoomId = AutoId( room );
     auto& aroom = RoomRepo::Get()( mRoomId );
@@ -200,16 +196,6 @@ void RoomEditorSystem::Load( std::string const& room )
     PropertyEditor::Get().SetRoomDesc( &mRoomDesc );
 }
 
-double const& RoomEditorSystem::GetX() const
-{
-    return mX;
-}
-
-double const& RoomEditorSystem::GetY() const
-{
-    return mY;
-}
-
 RoomEditorSystem::~RoomEditorSystem()
 {
     mPlayerModels.clear();
@@ -223,32 +209,6 @@ void RoomEditorSystem::Update( double DeltaTime )
     if ( mAutoSaveOn && mTimer.IsTime() )
     {
         Save();
-    }
-    glm::vec2 cameraCenter = mRenderer->GetCamera().GetCenter();
-    mX = cameraCenter.x;
-    mY = cameraCenter.y;
-    uint32_t currentKeyMovement = 0;
-    if( mKeyboard->GetKey( GLFW_KEY_W ).State == KeyState::Down )
-    {
-        currentKeyMovement |= engine::KeyboardAdapterSystem::MF_Up;
-    }
-    if( mKeyboard->GetKey( GLFW_KEY_A ).State == KeyState::Down )
-    {
-        currentKeyMovement |= engine::KeyboardAdapterSystem::MF_Left;
-    }
-    if( mKeyboard->GetKey( GLFW_KEY_S ).State == KeyState::Down )
-    {
-        currentKeyMovement |= engine::KeyboardAdapterSystem::MF_Down;
-    }
-    if( mKeyboard->GetKey( GLFW_KEY_D ).State == KeyState::Down )
-    {
-        currentKeyMovement |= engine::KeyboardAdapterSystem::MF_Right;
-    }
-    currentKeyMovement |= mCurrentMovement;
-    if ( !EditorHudState::Get().IsHudShown() )
-    {
-        mX += 1000 * DeltaTime * ( ( ( currentKeyMovement & engine::KeyboardAdapterSystem::MF_Left ) ? -1 : 0 ) + ( ( currentKeyMovement & engine::KeyboardAdapterSystem::MF_Right ) ? 1 : 0 ) );
-        mY += 1000 * DeltaTime * ( ( ( currentKeyMovement & engine::KeyboardAdapterSystem::MF_Up ) ? 1 : 0 ) + ( ( currentKeyMovement & engine::KeyboardAdapterSystem::MF_Down ) ? -1 : 0 ) );
     }
     if (mKeyboard->GetKey( GLFW_KEY_M ).State == KeyState::Typed)
     {
@@ -282,32 +242,6 @@ void RoomEditorSystem::Update( double DeltaTime )
     ImGui::End();
 
     PropertyEditor::Get().DrawUI();
-}
-void RoomEditorSystem::OnScreenMouseMove( ::ScreenMouseMoveEvent const& Evt )
-{
-    if (!EditorTargetSystem::Get()->EdgeScrollAllowed())
-    {
-        return;
-    }
-    int w, h;
-    mWindow->GetWindowSize( w, h );
-    mCurrentMovement = 0;
-    if( Evt.Pos.y < 100 )
-    {
-        mCurrentMovement |= engine::KeyboardAdapterSystem::MF_Up;
-    }
-    if( Evt.Pos.x < 100 )
-    {
-        mCurrentMovement |= engine::KeyboardAdapterSystem::MF_Left;
-    }
-    if( Evt.Pos.y > h - 150 )
-    {
-        mCurrentMovement |= engine::KeyboardAdapterSystem::MF_Down;
-    }
-    if( Evt.Pos.x > w - 100 )
-    {
-        mCurrentMovement |= engine::KeyboardAdapterSystem::MF_Right;
-    }
 }
 
 void RoomEditorSystem::Save()

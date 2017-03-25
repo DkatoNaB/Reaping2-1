@@ -17,14 +17,29 @@ void EditorCameraSystem::Init()
     mOnScreenMouseMove = EventServer< ::ScreenMouseMoveEvent>::Get().Subscribe( std::bind( &EditorCameraSystem::OnScreenMouseMove, this, std::placeholders::_1 ) );
 }
 
+void EditorCameraSystem::SetEnabled( bool enabled )
+{
+    System::SetEnabled( enabled );
+    auto&& rs = engine::Engine::Get().GetSystem<engine::RendererSystem>();
+    if( !rs.IsValid() )
+    {
+        return;
+    }
+    if( enabled && !mCamera )
+    {
+        mCamera.reset( new Camera( rs->GetCamera().GetProjection() ) );
+    }
+    rs->SetOverrideCamera( enabled ? mCamera.get() : nullptr );
+}
 
 void EditorCameraSystem::Update(double DeltaTime)
 {
+    if(!mCamera)
+    {
+        return;
+    }
     auto&& keyboard =::engine::Engine::Get().GetSystem<engine::KeyboardSystem>();
     auto&& renderer = engine::Engine::Get().GetSystem<engine::RendererSystem>();
-    glm::vec2 cameraCenter = renderer->GetCamera().GetCenter();
-    mX = cameraCenter.x;
-    mY = cameraCenter.y;
     uint32_t currentKeyMovement = 0;
     if( keyboard->GetKey( GLFW_KEY_W ).State == KeyState::Down )
     {
@@ -43,12 +58,15 @@ void EditorCameraSystem::Update(double DeltaTime)
         currentKeyMovement |= engine::KeyboardAdapterSystem::MF_Right;
     }
     currentKeyMovement |= mCurrentMovement;
-    mX += 1000 * DeltaTime * ( ( ( currentKeyMovement & engine::KeyboardAdapterSystem::MF_Left ) ? -1 : 0 ) + ( ( currentKeyMovement & engine::KeyboardAdapterSystem::MF_Right ) ? 1 : 0 ) );
-    mY += 1000 * DeltaTime * ( ( ( currentKeyMovement & engine::KeyboardAdapterSystem::MF_Up ) ? 1 : 0 ) + ( ( currentKeyMovement & engine::KeyboardAdapterSystem::MF_Down ) ? -1 : 0 ) );
+    auto center = mCamera->GetCenter();
+    center.x += 1000 * DeltaTime * ( ( ( currentKeyMovement & engine::KeyboardAdapterSystem::MF_Left ) ? -1 : 0 ) + ( ( currentKeyMovement & engine::KeyboardAdapterSystem::MF_Right ) ? 1 : 0 ) );
+    center.y += 1000 * DeltaTime * ( ( ( currentKeyMovement & engine::KeyboardAdapterSystem::MF_Up ) ? 1 : 0 ) + ( ( currentKeyMovement & engine::KeyboardAdapterSystem::MF_Down ) ? -1 : 0 ) );
+    mCamera->SetCenter( center );
 }
 
 void EditorCameraSystem::OnScreenMouseMove( ::ScreenMouseMoveEvent const& Evt )
 {
+    mCurrentMovement = 0;
     if (!EditorTargetSystem::Get()->EdgeScrollAllowed())
     {
         return;
@@ -56,7 +74,6 @@ void EditorCameraSystem::OnScreenMouseMove( ::ScreenMouseMoveEvent const& Evt )
     int w, h;
     auto&& window = engine::Engine::Get().GetSystem<engine::WindowSystem>();
     window->GetWindowSize( w, h );
-    mCurrentMovement = 0;
     if( Evt.Pos.y < 100 )
     {
         mCurrentMovement |= engine::KeyboardAdapterSystem::MF_Up;
@@ -73,16 +90,6 @@ void EditorCameraSystem::OnScreenMouseMove( ::ScreenMouseMoveEvent const& Evt )
     {
         mCurrentMovement |= engine::KeyboardAdapterSystem::MF_Right;
     }
-}
-
-double const& EditorCameraSystem::GetX() const
-{
-    return mX;
-}
-
-double const& EditorCameraSystem::GetY() const
-{
-    return mY;
 }
 
 Opt<EditorCameraSystem> EditorCameraSystem::Get()

@@ -147,11 +147,8 @@ void RoomEditorSystem::Load( std::string const& room )
 {
     engine::Engine::Get().GetSystem<SpawnActorMapElementSystem>()->SetRemoveMapElementWhenUsed( false );
     mRoomName = room;
-    ModelValue& PlayerModel = const_cast<ModelValue&>( RootModel::Get()["player"] );
-    mPlayerModels.clear();
     auto&& editorCameraS = EditorCameraSystem::Get();
-    mPlayerModels.push_back( new ModelValue( GetDoubleFunc( editorCameraS.Get(), &EditorCameraSystem::GetX ), "x", &PlayerModel ) );
-    mPlayerModels.push_back( new ModelValue( GetDoubleFunc( editorCameraS.Get(), &EditorCameraSystem::GetY ), "y", &PlayerModel ) );
+    editorCameraS->SetEnabled( true );
 
     mRoomId = AutoId( room );
     auto& aroom = RoomRepo::Get()( mRoomId );

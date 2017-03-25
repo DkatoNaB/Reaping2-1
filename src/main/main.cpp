@@ -332,6 +332,7 @@ int main( int argc, char* argv[] )
         Eng.AddSystem( AutoId( "editor_system" ) );
         Eng.AddSystem( AutoId( "room_editor_system" ) );
         Eng.AddSystem( AutoId( "EditorCameraSystem" ) );
+        Eng.GetSystem<map::EditorCameraSystem>()->SetEnabled( false );
 
         Eng.AddSystem( AutoId( "editor_target_system" ) );
         Eng.AddSystem( AutoId( "editor_soldier_spawn_system" ) );

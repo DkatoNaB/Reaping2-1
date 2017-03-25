@@ -17,10 +17,10 @@
 
 namespace engine {
 namespace {
-double GetCamSize( Camera* cam )
+double GetCamSize( RendererSystem* rs )
 {
     static float const activityMult = Settings::Get().GetFloat( "activity.camera_multiplier", 0.5 );
-    auto const& view = cam->VisibleRegion();
+    auto const& view = rs->GetCamera().VisibleRegion();
     return std::max( view.z - view.x, view.w - view.y ) * activityMult;
 }
 enum ShownLayer
@@ -60,7 +60,8 @@ ShownLayer shownLayer()
 RendererSystem::RendererSystem()
     : mWorldProjector( -1000.0f, 1000.0f )
     , mUiProjector( 100.0f, 0.0f, Projection::VM_Fixed )
-    , mCamera( mWorldProjector )
+    , mPlayerCamera( mWorldProjector )
+    , mCamera( &mPlayerCamera )
     , mUi( Ui::Get() )
     , mDecalEngine( DecalEngine::Get() )
     , mShaderManager( ShaderManager::Get() )
@@ -72,13 +73,12 @@ RendererSystem::RendererSystem()
     mMousePressId = EventServer<ScreenMousePressEvent>::Get().Subscribe( boost::bind( &RendererSystem::OnMousePressEvent, this, _1 ) );
     mMouseReleaseId = EventServer<ScreenMouseReleaseEvent>::Get().Subscribe( boost::bind( &RendererSystem::OnMouseReleaseEvent, this, _1 ) );
     core::ActivityTraits::SetActorScaleFunc( std::bind( &RenderableRepo::GetMaxScale, &RenderableRepo::Get(), std::placeholders::_1 ) );
-    core::ActivityTraits::SetActiveSizeFunc( std::bind( &GetCamSize, &mCamera ) );
+    core::ActivityTraits::SetActiveSizeFunc( std::bind( &GetCamSize, this ) );
     Init();
 }
 
 RendererSystem::~RendererSystem()
 {
-
 }
 
 void RendererSystem::SetupIdentity()
@@ -130,7 +130,7 @@ void RendererSystem::OnMousePressEvent( const ScreenMousePressEvent& Event )
         return;
     }
 
-    glm::vec3 WorldEvtPos( mCamera.GetInverseView()*glm::vec4( mWorldProjector.Unproject( EvtPos ), 1.0 ) );
+    glm::vec3 WorldEvtPos( GetCamera().GetInverseView()*glm::vec4( mWorldProjector.Unproject( EvtPos ), 1.0 ) );
 
     WorldMousePressEvent WorldEvt( glm::vec2( WorldEvtPos.x, WorldEvtPos.y ), Event.Button );
     EventServer<WorldMousePressEvent>::Get().SendEvent( WorldEvt );
@@ -150,7 +150,7 @@ void RendererSystem::OnMouseReleaseEvent( const ScreenMouseReleaseEvent& Event )
         return;
     }
 
-    glm::vec3 WorldEvtPos( mCamera.GetInverseView()*glm::vec4( mWorldProjector.Unproject( EvtPos ), 1.0 ) );
+    glm::vec3 WorldEvtPos( GetCamera().GetInverseView()*glm::vec4( mWorldProjector.Unproject( EvtPos ), 1.0 ) );
     WorldMouseReleaseEvent WorldEvt( glm::vec2( WorldEvtPos.x, WorldEvtPos.y ), Event.Button );
     EventServer<WorldMouseReleaseEvent>::Get().SendEvent( WorldEvt );
 }
@@ -302,8 +302,8 @@ void RendererSystem::Update( double DeltaTime )
     }
 
     render::ParticleEngine::Get().Update( DeltaTime );
-    mCamera.Update();
-    SetupRenderer( mCamera );
+    mPlayerCamera.Update();
+    SetupRenderer( GetCamera() );
     // render world
     // allocate render target ids
     static uint32_t const world = rt.GetFreeId();
@@ -329,7 +329,7 @@ void RendererSystem::Update( double DeltaTime )
     std::vector<Camera const*> cameras;
     std::vector<std::unique_ptr<Projection> > tempProjections;
     std::vector<std::unique_ptr<Camera> > tempCameras;
-    cameras.push_back( &mCamera );
+    cameras.push_back( &GetCamera() );
     // add cameras for lights
     for( auto const& light : lights )
     {
@@ -392,7 +392,7 @@ void RendererSystem::Update( double DeltaTime )
 
             glBlendEquation( GL_FUNC_ADD );
             rt.SelectTargetTexture( world );
-            SetupRenderer( mCamera );
+            SetupRenderer( GetCamera() );
             mActorRenderer.Draw( std::bind( &selectShadowReceivers, std::placeholders::_1, shadowLevel ) );
 
             rt.SetTargetTexture( lightrl, RenderTargetProps( mWorldProjector.GetViewport().Size() * shadowmult, { GL_RGBA, GL_RGBA } ) );
@@ -407,12 +407,12 @@ void RendererSystem::Update( double DeltaTime )
 
             // -- direct sunlight to outline
             // render the normal shadowcasters with a "tail" ( lightVec )
-            rt.SetTargetTexture( sunline, RenderTargetProps( mCamera.GetProjection().GetViewport().Size() * shadowmult, { GL_RGBA4 } ) );
-            SetupRenderer( mCamera, shadowmult );
+            rt.SetTargetTexture( sunline, RenderTargetProps( GetCamera().GetProjection().GetViewport().Size() * shadowmult, { GL_RGBA4 } ) );
+            SetupRenderer( GetCamera(), shadowmult );
             mActorRenderer.Draw(
                 std::bind( &selectShadowCasters, std::placeholders::_1, shadowLevel),
                 [&](ShaderManager& ShaderMgr)->void{
-                    ShaderMgr.UploadData( "resolution", mCamera.GetProjection().GetViewport().Size() * shadowmult );
+                    ShaderMgr.UploadData( "resolution", GetCamera().GetProjection().GetViewport().Size() * shadowmult );
                     ShaderMgr.UploadData( "lightVec", lightVec );
                 },
                 numShadowSteps
@@ -425,7 +425,7 @@ void RendererSystem::Update( double DeltaTime )
             rt.SelectTargetTexture( lightrl, true );
             mWorldRenderer.Draw( DeltaTime, rt.GetTextureId( sunline ), sunlight,
                 [&](ShaderManager& ShaderMgr)->void{
-                    ShaderMgr.UploadData( "resolution", mCamera.GetProjection().GetViewport().Size() * shadowmult );
+                    ShaderMgr.UploadData( "resolution", GetCamera().GetProjection().GetViewport().Size() * shadowmult );
                     ShaderMgr.UploadData( "ambient", ambientLight );
                 } );
             // direct sunlight end
@@ -444,8 +444,8 @@ void RendererSystem::Update( double DeltaTime )
                 GLfloat aperture = ( light.lightC.IsValid() ? light.lightC->GetAperture() : 0 ) * 3.141592654 / 180.0;
                 GLfloat fsaperture = ( light.lightC.IsValid() ? light.lightC->GetFullStrengthAperture() : 0 ) * 3.141592654 / 180.0;
                 // lightPos4 is in player view space
-                auto lightPos4 =  mCamera.GetProjection().GetMatrix() * mCamera.GetView() * pos;
-                auto sizePos4 =  mCamera.GetProjection().GetMatrix() * mCamera.GetView() * sizePos;
+                auto lightPos4 =  GetCamera().GetProjection().GetMatrix() * GetCamera().GetView() * pos;
+                auto sizePos4 =  GetCamera().GetProjection().GetMatrix() * GetCamera().GetView() * sizePos;
                 // create camera with max light range range, pos center
                 // use that cam + world to render outline to small shadow map
                 // use small shadow map to create 1d map
@@ -476,7 +476,7 @@ void RendererSystem::Update( double DeltaTime )
                 float distanceMult = mWorldProjector.GetVisibleRegion().y * 1.0f / camProjection.GetVisibleRegion().y;
                 mWorldRenderer.Draw( DeltaTime, rt.GetTextureId( unwrap ), lightsid,
                     [&](ShaderManager& ShaderMgr)->void{
-                        ShaderMgr.UploadData( "resolution", mCamera.GetProjection().GetViewport().Size() * shadowmult );
+                        ShaderMgr.UploadData( "resolution", GetCamera().GetProjection().GetViewport().Size() * shadowmult );
                         ShaderMgr.UploadData( "lightPosition", lightPos );
                         ShaderMgr.UploadData( "lightRect", sizePos2 );
                         ShaderMgr.UploadData( "lightSize", lightSize );
@@ -492,10 +492,10 @@ void RendererSystem::Update( double DeltaTime )
             rt.SelectTargetTexture( cumulativeLight );
             mWorldRenderer.Draw( DeltaTime, rt.GetTextureId( lightrl, 1 ), mergelights,
                      [&](ShaderManager& ShaderMgr)->void{
-                        ShaderMgr.UploadData( "resolution", mCamera.GetProjection().GetViewport().Size() );
+                        ShaderMgr.UploadData( "resolution", GetCamera().GetProjection().GetViewport().Size() );
                     } );
             glBlendEquation( GL_FUNC_ADD );
-            SetupRenderer( mCamera, shadowmult );
+            SetupRenderer( GetCamera(), shadowmult );
             // remove self-cast shadows from the normal map mask
             // note: we use the alpha channel only from the cumul. lights map, so we can simply use the default draw shader. yay.
             mActorRenderer.Draw( std::bind( &selectShadowCasters, std::placeholders::_1, shadowLevel) );
@@ -504,12 +504,12 @@ void RendererSystem::Update( double DeltaTime )
             if( topmost )  // on topmost level, only the shadow receivers should be visibly illuminated, not the lower shadow receiver layers
             {   // note: topmost level must use full-size texture, as we are cutting out the highest shadow receivers
                 // and if we apply scaling, the cut-out might leave bright pixels on the cut edges
-                SetupRenderer( mCamera );
+                SetupRenderer( GetCamera() );
                 SetupIdentity();
-                rt.SetTargetTexture( fullsizeshadows, RenderTargetProps( mCamera.GetProjection().GetViewport().Size(), { GL_RGBA4 } ) );
+                rt.SetTargetTexture( fullsizeshadows, RenderTargetProps( GetCamera().GetProjection().GetViewport().Size(), { GL_RGBA4 } ) );
                 mWorldRenderer.Draw( DeltaTime, rt.GetTextureId( lightrl ), solidid );
-                rt.SetTargetTexture( topcasters, RenderTargetProps( mCamera.GetProjection().GetViewport().Size(), { GL_RGBA4, GL_RGB4 } ) );
-                SetupRenderer( mCamera );
+                rt.SetTargetTexture( topcasters, RenderTargetProps( GetCamera().GetProjection().GetViewport().Size(), { GL_RGBA4, GL_RGB4 } ) );
+                SetupRenderer( GetCamera() );
                 mActorRenderer.Draw( std::bind( &selectShadowReceivers, std::placeholders::_1, shadowLevel ) );
                 glBlendFuncSeparate( GL_ZERO, GL_ONE, GL_DST_ALPHA, GL_ZERO );
                 rt.SelectTargetTexture( fullsizeshadows );
@@ -520,13 +520,13 @@ void RendererSystem::Update( double DeltaTime )
 
             glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
             rt.SelectTargetTexture( world );
-            SetupRenderer( mCamera );
+            SetupRenderer( GetCamera() );
             // using a small(ish) shadow mult with linear texture mag filter, we can simply render the shadow layer instead of using a more expensive blur filter ( and that even a few times )
             SetupIdentity();
             // !---- lights/shadows
             mWorldRenderer.Draw( DeltaTime, rt.GetTextureId( topmost ? fullsizeshadows : lightrl ), lightmap,
                      [&](ShaderManager& ShaderMgr)->void{
-                        ShaderMgr.UploadData( "resolution", mCamera.GetProjection().GetViewport().Size() * shadowmult );
+                        ShaderMgr.UploadData( "resolution", GetCamera().GetProjection().GetViewport().Size() * shadowmult );
                         ShaderMgr.UploadData( "maxShadow", maxShadow );
                     } );
         }
@@ -538,7 +538,7 @@ void RendererSystem::Update( double DeltaTime )
     mPerfTimer.Log( "post shadow" );
 
     // render the world to the worldBumped texture using the bump mapping shader
-    SetupRenderer( mCamera );
+    SetupRenderer( GetCamera() );
     rt.SetTargetTexture( worldBumped, RenderTargetProps( mWorldProjector.GetViewport().Size() ) );
     SetupIdentity();
     glBlendFunc( GL_ONE, GL_ONE );
@@ -547,7 +547,7 @@ void RendererSystem::Update( double DeltaTime )
     glDepthFunc( GL_LEQUAL );
     for( auto const& light : lights )
     {
-        auto lightPos4 =  mWorldProjector.GetMatrix() * mCamera.GetView()
+        auto lightPos4 =  mWorldProjector.GetMatrix() * GetCamera().GetView()
             * glm::vec4( light.center.x, light.center.y, 1, 1 );
         glm::vec2 lightPos = glm::vec2( lightPos4.x + 1, lightPos4.y + 1 ) / 2.0;
         GLfloat lightSize = light.lightC.IsValid() ? light.lightC->GetRadius() : -1.0;
@@ -584,7 +584,7 @@ void RendererSystem::Update( double DeltaTime )
             static int32_t debuggedPP = AutoId( Settings::Get().GetStr( "graphics.shown_layer_pp_id", "" ) );
             uint32_t pp = id == debuggedPP ? worldDedicatedPostProcess : worldPostProcess;
             rt.SetTargetTexture( pp, worldPPProps );
-            SetupRenderer( mCamera );
+            SetupRenderer( GetCamera() );
             mActorRenderer.Draw( id );
 
             GLuint srcTexture = rt.GetTextureId( worldBumped );
@@ -637,7 +637,7 @@ void RendererSystem::Update( double DeltaTime )
         mWorldRenderer.Draw( DeltaTime, rt.GetTextureId( worldEffects ), solidid );
     }
 
-    SetupRenderer( mCamera );
+    SetupRenderer( GetCamera() );
     render::ParticleEngine::Get().Draw();
 
     Viewport const& Vp = mUiProjector.GetViewport();
@@ -672,7 +672,7 @@ void RendererSystem::Update( double DeltaTime )
 
 void RendererSystem::SendWorldMouseMoveEvent()
 {
-    glm::vec3 newMouseWorldPos = glm::vec3( mCamera.GetInverseView() * glm::vec4( mWorldProjector.Unproject( mMouseRawPos ), 1.0 ) );
+    glm::vec3 newMouseWorldPos = glm::vec3( GetCamera().GetInverseView() * glm::vec4( mWorldProjector.Unproject( mMouseRawPos ), 1.0 ) );
     if ( newMouseWorldPos != mMouseWorldPos )
     {
         mMouseWorldPos = newMouseWorldPos;
@@ -683,9 +683,18 @@ void RendererSystem::SendWorldMouseMoveEvent()
 
 Camera const& RendererSystem::GetCamera() const
 {
-    return mCamera;
+    return mCamera == nullptr ? static_cast<Camera const&>(mPlayerCamera) : *mCamera;
 }
 
+Camera& RendererSystem::GetCamera()
+{
+    return mCamera == nullptr ? static_cast<Camera&>(mPlayerCamera) : *mCamera;
+}
+
+void RendererSystem::SetOverrideCamera( Camera* cam )
+{
+    mCamera = cam;
+}
 
 } // namespace engine
 

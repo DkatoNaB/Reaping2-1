@@ -22,7 +22,8 @@ class RendererSystem : public System
 
     Projection mWorldProjector;
     Projection mUiProjector;
-    PlayerCamera mCamera;
+    PlayerCamera mPlayerCamera;
+    Camera* mCamera;
     Ui& mUi;
     ActorRenderer mActorRenderer;
     UiRenderer mUiRenderer;
@@ -56,6 +57,8 @@ public:
 
     void SendWorldMouseMoveEvent();
     Camera const& GetCamera() const;
+    Camera& GetCamera();
+    void SetOverrideCamera( Camera* cam );
     perf::Timer_t mPerfTimer;
 };
 } // namespace engine

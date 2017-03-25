@@ -18,6 +18,7 @@
 #include "room_editor_system.h"
 #include "editor_mode_changed_event.h"
 #include "editor_hud_state.h"
+#include "editor_camera_system.h"
 #include "spawn_actor_map_element_system.h"
 #include "map_repo.h"
 #include <imgui.h>
@@ -32,10 +33,7 @@ EditorSystem::EditorSystem()
     , mLoadModel( StringFunc( this, &EditorSystem::Load ), "load", &mEditorModel )
     , mModeModel( StringFunc( this, &EditorSystem::ModeSelect ), "mode", &mEditorModel )
     , mSaveModel( VoidFunc( this, &EditorSystem::Save ), "save", &mEditorModel )
-    , mX( 0 )
-    , mY( 0 )
     , mEditorMode()
-    , mCurrentMovement( 0 )
     , mLevelName()
     , mTimer()
     , mAutoSaveOn( false )
@@ -46,9 +44,7 @@ EditorSystem::EditorSystem()
 void EditorSystem::Init()
 {
     mKeyboard =::engine::Engine::Get().GetSystem<engine::KeyboardSystem>();
-    mOnScreenMouseMove = EventServer< ::ScreenMouseMoveEvent>::Get().Subscribe( boost::bind( &EditorSystem::OnScreenMouseMove, this, _1 ) );
     mWindow = engine::Engine::Get().GetSystem<engine::WindowSystem>();
-    mRenderer = engine::Engine::Get().GetSystem<engine::RendererSystem>();
     mKeyId = EventServer<KeyEvent>::Get().Subscribe( boost::bind( &EditorSystem::OnKeyEvent, this, _1 ) );
     mOnEditorBack = EventServer<map::EditorBackEvent>::Get().Subscribe( boost::bind( &EditorSystem::OnEditorBack, this, _1 ) );
     // collect editable maps
@@ -122,12 +118,9 @@ void EditorSystem::Load( std::string const& level )
 {
     engine::Engine::Get().GetSystem<SpawnActorMapElementSystem>()->SetRemoveMapElementWhenUsed( false );
     mLevelName = level;
-    mX = 0;
-    mY = 0;
-    ModelValue& PlayerModel = const_cast<ModelValue&>( RootModel::Get()["player"] );
-    mPlayerModels.clear();
-    mPlayerModels.push_back( new ModelValue( GetDoubleFunc( this, &EditorSystem::GetX ), "x", &PlayerModel ) );
-    mPlayerModels.push_back( new ModelValue( GetDoubleFunc( this, &EditorSystem::GetY ), "y", &PlayerModel ) );
+    auto&& editorCameraS = EditorCameraSystem::Get();
+    editorCameraS->SetEnabled( true );
+
 
     mScene.Load( level );
     Ui::Get().Load( "editor_base_hud" );
@@ -136,19 +129,8 @@ void EditorSystem::Load( std::string const& level )
     ::engine::Engine::Get().SetEnabled<EditorTargetSystem>( true );
 }
 
-double const& EditorSystem::GetX() const
-{
-    return mX;
-}
-
-double const& EditorSystem::GetY() const
-{
-    return mY;
-}
-
 EditorSystem::~EditorSystem()
 {
-    mPlayerModels.clear();
 }
 
 
@@ -159,32 +141,6 @@ void EditorSystem::Update( double DeltaTime )
     if ( mAutoSaveOn && mTimer.IsTime() )
     {
         Save();
-    }
-    glm::vec2 cameraCenter = mRenderer->GetCamera().GetCenter();
-    mX = cameraCenter.x;
-    mY = cameraCenter.y;
-    uint32_t currentKeyMovement = 0;
-    if( mKeyboard->GetKey( GLFW_KEY_W ).State == KeyState::Down )
-    {
-        currentKeyMovement |= engine::KeyboardAdapterSystem::MF_Up;
-    }
-    if( mKeyboard->GetKey( GLFW_KEY_A ).State == KeyState::Down )
-    {
-        currentKeyMovement |= engine::KeyboardAdapterSystem::MF_Left;
-    }
-    if( mKeyboard->GetKey( GLFW_KEY_S ).State == KeyState::Down )
-    {
-        currentKeyMovement |= engine::KeyboardAdapterSystem::MF_Down;
-    }
-    if( mKeyboard->GetKey( GLFW_KEY_D ).State == KeyState::Down )
-    {
-        currentKeyMovement |= engine::KeyboardAdapterSystem::MF_Right;
-    }
-    currentKeyMovement |= mCurrentMovement;
-    if ( !EditorHudState::Get().IsHudShown() )
-    {
-        mX += 1000 * DeltaTime * ( ( ( currentKeyMovement & engine::KeyboardAdapterSystem::MF_Left ) ? -1 : 0 ) + ( ( currentKeyMovement & engine::KeyboardAdapterSystem::MF_Right ) ? 1 : 0 ) );
-        mY += 1000 * DeltaTime * ( ( ( currentKeyMovement & engine::KeyboardAdapterSystem::MF_Up ) ? 1 : 0 ) + ( ( currentKeyMovement & engine::KeyboardAdapterSystem::MF_Down ) ? -1 : 0 ) );
     }
     if ( mKeyboard->GetKey(GLFW_KEY_M).State == KeyState::Typed )
     {
@@ -199,33 +155,6 @@ void EditorSystem::Update( double DeltaTime )
             EventServer<EditorModeChangedEvent>::Get().SendEvent( EditorModeChangedEvent( "mode_select", mEditorMode ) );
             mEditorMode = "mode_select";
         }
-    }
-}
-
-void EditorSystem::OnScreenMouseMove( ::ScreenMouseMoveEvent const& Evt )
-{
-    if (!EditorTargetSystem::Get()->EdgeScrollAllowed())
-    {
-        return;
-    }
-    int w, h;
-    mWindow->GetWindowSize( w, h );
-    mCurrentMovement = 0;
-    if( Evt.Pos.y < 100 )
-    {
-        mCurrentMovement |= engine::KeyboardAdapterSystem::MF_Up;
-    }
-    if( Evt.Pos.x < 100 )
-    {
-        mCurrentMovement |= engine::KeyboardAdapterSystem::MF_Left;
-    }
-    if( Evt.Pos.y > h - 150 )
-    {
-        mCurrentMovement |= engine::KeyboardAdapterSystem::MF_Down;
-    }
-    if( Evt.Pos.x > w - 100 )
-    {
-        mCurrentMovement |= engine::KeyboardAdapterSystem::MF_Right;
     }
 }
 

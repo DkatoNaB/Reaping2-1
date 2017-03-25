@@ -9,6 +9,7 @@
 #include "render/renderer.h"
 #include "input/keyboard.h"
 #include "input/mouse.h"
+#include "render/camera.h"
 
 namespace map {
 
@@ -17,17 +18,15 @@ class EditorCameraSystem : public engine::System
 public:
     DEFINE_SYSTEM_BASE(EditorCameraSystem)
     EditorCameraSystem();
-    double const& GetX() const;
-    double const& GetY() const;
     static Opt<EditorCameraSystem> Get();
+    virtual void SetEnabled( bool enabled );
 protected:
     virtual void Init();
     virtual void Update( double DeltaTime );
 private:
+    std::unique_ptr<Camera> mCamera;
     AutoReg mOnScreenMouseMove;
     void OnScreenMouseMove( ::ScreenMouseMoveEvent const& Evt );
-    double mX = 0;
-    double mY = 0;
     uint32_t mCurrentMovement = 0;
 
 };

@@ -1,5 +1,6 @@
 #include "core/map/level_generator/cell_entrance_property.h"
 #include "spawn_property.h"
+#include "core/map/editor_mode.h"
 #include <imgui.h>
 
 namespace map {
@@ -145,6 +146,11 @@ void CellEntranceProperty::DrawUI()
     ImGui::Separator();
     ImGui::InputInt( "X:", &mX ); 
     ImGui::InputInt( "Y:", &mY ); 
+    ImGui::Button( "Pick entrance" );
+    if (ImGui::IsItemClicked())
+    {
+        EditorMode::Get().SetMode( EditorMode::Entrances );
+    }
     ImGui::Separator();
     ImGui::Button( "Select blocked targets" );
     ImGui::Button( "Add to blocked targets" );

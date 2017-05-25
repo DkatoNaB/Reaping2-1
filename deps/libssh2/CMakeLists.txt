@@ -1,5 +1,5 @@
 set(LIBSSH2_URL
-    "https://www.libssh2.org/download/libssh2-1.7.0.tar.gz"
+    "https://www.libssh2.org/download/libssh2-1.8.0.tar.gz"
     CACHE STRING "Location of libssh2 source package")
 
 if(UNIX)

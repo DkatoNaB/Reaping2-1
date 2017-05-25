@@ -1,5 +1,5 @@
 set(LIBCURL_URL
-    "https://github.com/curl/curl/archive/curl-7_48_0.zip"
+    "https://github.com/curl/curl/archive/curl-7_54_0.zip"
     CACHE STRING "Location of libcurl source package")
 
 add_custom_target(ext_libcurl_patch
@@ -19,5 +19,6 @@ ExternalProject_Add(ext_libcurl
             ${TOOLCHAIN_CMAKE_ARGS}
             -G ${CMAKE_GENERATOR}
             -DCMAKE_INSTALL_PREFIX=${EXTERNALS_INSTALL_DIR}
-            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
+            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+            -DENABLE_MANUAL=false)
 

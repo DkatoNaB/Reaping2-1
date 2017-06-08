@@ -213,9 +213,8 @@ void SpritePhaseCache::ProcessPending()
     {
         return;
     }
+    mVAO.Bind();
     static RenderTarget& rt( RenderTarget::Get() );
-    uint32_t current = rt.GetCurrentTarget();
-    rt.SelectTargetTexture( mTarget );
     glEnable( GL_TEXTURE_2D );
     glEnable( GL_BLEND );
     glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
@@ -223,9 +222,9 @@ void SpritePhaseCache::ProcessPending()
     ShaderManager& ShaderMgr( ShaderManager::Get() );
     static int32_t def( AutoId( "combiner" ) );
     ShaderMgr.ActivateShader( def );
-    ShaderMgr.UploadData( "texture", GLuint( 1 ) );
-    glActiveTexture( GL_TEXTURE0 + 1 );
-    mVAO.Bind();
+    ShaderMgr.UploadData( "texture", GLuint( 10 ) );
+    glActiveTexture( GL_TEXTURE0 + 10 );
+    rt.SelectTargetTexture( mTarget );
 
     for( auto const& vt : mPending )
     {
@@ -261,10 +260,11 @@ void SpritePhaseCache::ProcessPending()
                 mutablePhase.Top );
 
     }
-    mVAO.Unbind();
     glActiveTexture( GL_TEXTURE0 );
+//  setting back this target texture causes a whole world of hurt, so don't do that
+//    rt.SelectTargetTexture( current );
+    mVAO.Unbind();
     mPending.clear();
-    rt.SelectTargetTexture( current );
 }
 }
 

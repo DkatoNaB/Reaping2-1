@@ -973,6 +973,7 @@ core/map/editor_camera_system.h
 core/map/editor_group_system.h
 core/map/editor_layer.h
 core/map/editor_layer_system.h
+core/map/editor_mode.h
 core/map/editor_renderable_layer_system.h
 core/map/editor_soldier_spawn_system.h
 core/map/editor_system.h

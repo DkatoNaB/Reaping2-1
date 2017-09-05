@@ -19,5 +19,6 @@ ExternalProject_Add(ext_libwhereami
             ${PLATFORM_CMAKE_ARGS}
             ${TOOLCHAIN_CMAKE_ARGS}
             -G ${CMAKE_GENERATOR}
+            -DCMAKE_POSITION_INDEPENDENT_CODE=ON
             -DCMAKE_INSTALL_PREFIX=${EXTERNALS_INSTALL_DIR}
             -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})

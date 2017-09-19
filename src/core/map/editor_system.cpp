@@ -13,7 +13,6 @@
 #include "respawn_actor_map_element_system.h"
 #include "ctf_flag_spawn_point_map_element.h"
 #include "../i_renderable_component.h"
-#include "input/keyboard_adapter_system.h"
 #include "editor_back_event.h"
 #include "room_editor_system.h"
 #include "editor_mode_changed_event.h"
@@ -21,6 +20,8 @@
 #include "editor_camera_system.h"
 #include "spawn_actor_map_element_system.h"
 #include "map_repo.h"
+#include "input/keyboard_and_mouse_adapter_system.h"
+
 #include <imgui.h>
 
 namespace map {

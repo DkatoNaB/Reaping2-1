@@ -44,6 +44,10 @@
 #include "data_checksum_message.h"
 #include "map_start_message.h"
 #include "map_load_message.h"
+#include "suppress_message.h"
+#include "waypoint_message.h"
+#include "waypoints_data_message.h"
+#include "dark_matter_message.h"
 
 using platform::AutoId;
 namespace network {
@@ -96,7 +100,10 @@ MessageHandlerSubSystemFactory::MessageHandlerSubSystemFactory()
     Bind( AutoId( "data_checksum_message_handler_sub_system" ), &CreateSubSystem<DataChecksumMessageHandlerSubSystem>);
     Bind( AutoId( "map_start_message_handler_sub_system" ), &CreateSubSystem<MapStartMessageHandlerSubSystem> );
     Bind( AutoId( "map_load_message_handler_sub_system" ), &CreateSubSystem<MapLoadMessageHandlerSubSystem> );
-
+    Bind( AutoId( "suppress_message_handler_sub_system" ), &CreateSubSystem<SuppressMessageHandlerSubSystem> );
+    Bind( AutoId( "waypoint_message_handler_sub_system" ), &CreateSubSystem<WaypointMessageHandlerSubSystem> );
+    Bind( AutoId( "waypoints_data_message_handler_sub_system" ), &CreateSubSystem<WaypointsDataMessageHandlerSubSystem> );
+    Bind( AutoId( "dark_matter_message_handler_sub_system" ), &CreateSubSystem<DarkMatterMessageHandlerSubSystem> );
 }
 
 } // namespace network

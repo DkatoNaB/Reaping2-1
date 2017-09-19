@@ -62,6 +62,11 @@ void FreeForAllGameModeSystem::OnStartGameMode( core::StartGameModeEvent const& 
     ::engine::Engine::Get().SetEnabled< ::core::CaptureTheFlagGameModeSystem>( false );
     ::engine::Engine::Get().SetEnabled< ::core::RogueGameModeSystem>( false );
 
+    if (ProgramState::Get().mMode == ProgramState::Client)
+    {
+        return;
+    }
+
     auto levelSelectionSystem = engine::Engine::Get().GetSystem<LevelSelectionSystem>();
     if ( levelSelectionSystem.IsValid() )
     {
@@ -70,10 +75,6 @@ void FreeForAllGameModeSystem::OnStartGameMode( core::StartGameModeEvent const& 
     else
     {
         L1("failed to retrieve LevelSelectionSystem\n");
-        return;
-    }
-    if ( ProgramState::Get().mMode == ProgramState::Client )
-    {
         return;
     }
 
@@ -95,7 +96,7 @@ void FreeForAllGameModeSystem::OnStartGameMode( core::StartGameModeEvent const& 
             Pl->Get<IInventoryComponent>();
             Opt<IInventoryComponent> inventoryC = Pl->Get<IInventoryComponent>();
             inventoryC->AddItem( AutoId( "plasma_gun" ) );
-            inventoryC->SetSelectedWeapon( AutoId( "plasma_gun" ) );
+            inventoryC->SetSelectedItem( ItemType::Weapon, AutoId( "plasma_gun" ) );
             Opt<PlayerControllerComponent> pcc( Pl->Get<IControllerComponent>() );
             pcc->SetEnabled( false );
             pcc->mActive = false;
@@ -125,12 +126,21 @@ void FreeForAllGameModeSystem::OnMapStart( core::MapStartEvent const& Evt )
     }
     if (Evt.mState == core::MapStartEvent::Ready)
     {
-        Ui::Get().Load( "hud" );
+        mProgramState.mHUD = "hud";
+        Ui::Get().Load( mProgramState.mHUD );
+    }
+    if (Evt.mState == core::MapStartEvent::ActorsSpawned&&mProgramState.mMode != ProgramState::Client)
+    {
+        bool succ = engine::SystemSuppressor::Get().Resume( engine::SystemSuppressor::SceneLoad );
     }
 }
 
 void FreeForAllGameModeSystem::OnMapLoad( core::MapLoadEvent const& Evt )
 {
+    if (GameModes::FFA != mProgramState.mGameMode)
+    {
+        return;
+    }
     Ui::Get().Load( "waiting_load" );
     bool succ = engine::SystemSuppressor::Get().Suppress( engine::SystemSuppressor::SceneLoad );
 }

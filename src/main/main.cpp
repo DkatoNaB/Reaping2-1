@@ -65,6 +65,7 @@
 #include "platform/game_clock.h"
 #include "platform/folder_package.h"
 #include "engine/system_suppressor.h"
+#include "core/fast_starter.h"
 
 using engine::Engine;
 namespace {
@@ -142,6 +143,7 @@ int main( int argc, char* argv[] )
     po::options_description desc( "Allowed options" );
     std::string deviceConfig;
     std::string datadir;
+    std::string fastStart;
     desc.add_options()
     ( "help", "produce help message" )
     ( "-c", po::value<std::string>( &programState.mServerIp ), "client" )
@@ -152,9 +154,9 @@ int main( int argc, char* argv[] )
     ( "-r", "connect as a random named soldier to localhost." )
     ( "-d", po::value<std::string>( &deviceConfig ), "set device configuration, format: player1:controller:1,player2:keyboard_and_mouse" )
     ( "-m", po::value<std::string>( &datadir ), "mount folder as data dir in addition to data.pkg" )
+    ( "-f", po::value<std::string>( &fastStart ), "use for fast start. use defined \"fast_start\" in settings. and / or | for params.")
     ( "calibrate", "print values read from detected controllers" )
     ;
-
     po::variables_map vm;
     po::store( po::parse_command_line( argc, argv, desc ), vm );
     po::notify( vm );
@@ -249,16 +251,17 @@ int main( int argc, char* argv[] )
     Eng.AddSystem( AutoId( "capture_the_flag_game_mode_system" ) );
     Eng.AddSystem( AutoId( "rogue_game_mode_system" ) );
     Eng.AddSystem( AutoId( "leaderboard_system" ) );
-
+    Eng.AddSystem( AutoId( "message_timer_system" ) );
     Eng.AddSystem( AutoId( "waypoint_system" ) );
     if (programState.mMode != ProgramState::Client)
     {
         Eng.AddSystem( AutoId( "worm_head_system" ) );
         Eng.AddSystem( AutoId( "worm_body_system" ) );
 
-
         Eng.AddSystem( AutoId( "randomize_sprite_system" ) );
+
         Eng.AddSystem( AutoId( "path_system" ) );
+        Eng.AddSystem( AutoId( "activatable_system" ) );
     }
     Eng.AddSystem( AutoId( "pulse_system" ) );
     ::engine::Engine::Get().SetEnabled< ::core::FreeForAllGameModeSystem>( false );
@@ -304,7 +307,11 @@ int main( int argc, char* argv[] )
         Eng.AddSystem( AutoId( "data_checksum_message_sender_system" ) );
         Eng.AddSystem( AutoId( "map_start_message_sender_system" ) );
         Eng.AddSystem( AutoId( "map_load_message_sender_system" ) );
+        Eng.AddSystem( AutoId( "suppress_message_sender_system" ) );
+        Eng.AddSystem( AutoId( "waypoints_data_message_sender_system" ) );
+        Eng.AddSystem( AutoId( "dark_matter_message_sender_system" ) );
     }
+    Eng.AddSystem( AutoId( "waypoint_message_sender_system" ) );
     if (programState.mMode != ProgramState::Client)
     {
         Eng.AddSystem( AutoId( "ctf_client_list_handling_system" ) );
@@ -389,8 +396,7 @@ int main( int argc, char* argv[] )
         Eng.AddSystem( AutoId( "mouse_system" ) );
         Eng.AddSystem( AutoId( "input_system" ) );
         //adapter systems should be here. after input system before controller systems.
-        Eng.AddSystem( AutoId( "keyboard_adapter_system" ) );
-        Eng.AddSystem( AutoId( "mouse_adapter_system" ) );
+        Eng.AddSystem( AutoId( "keyboard_and_mouse_adapter_system" ) );
         Eng.AddSystem( AutoId( "controller_adapter_system" ) );
         Opt<engine::ControllerAdapterSystem> cntrlAdapter( Eng.GetSystem<engine::ControllerAdapterSystem>() );
         cntrlAdapter->SetCalibrate( calibrateController );
@@ -469,6 +475,8 @@ int main( int argc, char* argv[] )
         Eng.AddSystem( AutoId( "listen_child_death_system" ) );
         Eng.AddSystem( AutoId( "remove_on_death_system" ) );
         Eng.AddSystem( AutoId( "explode_on_death_system" ) );
+        Eng.AddSystem( AutoId( "attractor_system" ) );
+        Eng.AddSystem( AutoId( "attractable_system" ) );
     }
     //Eng.AddSystem( AutoId( "remove_components_on_death_system" ) );
     Eng.AddSystem( AutoId( "soldier_auto_revive_system" ) );
@@ -487,6 +495,7 @@ int main( int argc, char* argv[] )
         collisionSS->AddSubSystem( AutoId( "shot_collision_component" ), AutoId( "shot_collision_sub_system" ) );
         collisionSS->AddSubSystem( AutoId( "aoe_collision_component" ), AutoId( "aoe_collision_sub_system" ) );
         collisionSS->AddSubSystem( AutoId( "flag_collision_component" ), AutoId( "flag_collision_sub_system" ) );
+        collisionSS->AddSubSystem( AutoId( "dark_matter_collision_component" ), AutoId( "dark_matter_collision_sub_system" ) );
     }
     if( programState.mMode != ProgramState::Server )
     {
@@ -526,11 +535,12 @@ int main( int argc, char* argv[] )
     PhaseChangeEventServer.SendEvent( PhaseChangedEvent( ProgramPhase::Running ) );
     EventServer<CycleEvent>& CycleEventServer( EventServer<CycleEvent>::Get() );
 
-    L1( "ctf_client_datas_message type: %d\n", network::ctf::ClientDatasMessage::GetType_static() );
-    L1( "client_datas_message type: %d\n", network::ClientDatasMessage::GetType_static() );
-    L1( "soldier_properties_message type: %d\n", network::SoldierPropertiesMessage::GetType_static() );
+    L2( "ctf_client_datas_message type: %d\n", network::ctf::ClientDatasMessage::GetType_static() );
+    L2( "client_datas_message type: %d\n", network::ClientDatasMessage::GetType_static() );
+    L2( "soldier_properties_message type: %d\n", network::SoldierPropertiesMessage::GetType_static() );
 
     platform::Clock::Get().UpdateElapsedTime();
+    core::FastStarter f( fastStart );
 
     while( IsMainRunning )
     {

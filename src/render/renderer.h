@@ -59,6 +59,7 @@ public:
     Camera const& GetCamera() const;
     Camera& GetCamera();
     void SetOverrideCamera( Camera* cam );
+    TextSceneRenderer& GetTextSceneRenderer();
     perf::Timer_t mPerfTimer;
 };
 } // namespace engine

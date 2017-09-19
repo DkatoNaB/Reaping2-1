@@ -1,7 +1,7 @@
 #include "platform/i_platform.h"
 #include "editor_camera_system.h"
 #include "engine/engine.h"
-#include "input/keyboard_adapter_system.h"
+#include "input/keyboard_and_mouse_adapter_system.h"
 #include "main/window.h"
 #include "editor_target_system.h"
 
@@ -43,24 +43,24 @@ void EditorCameraSystem::Update(double DeltaTime)
     uint32_t currentKeyMovement = 0;
     if( keyboard->GetKey( GLFW_KEY_W ).State == KeyState::Down )
     {
-        currentKeyMovement |= engine::KeyboardAdapterSystem::MF_Up;
+        currentKeyMovement |= engine::KeyboardAndMouseAdapterSystem::MF_Up;
     }
     if( keyboard->GetKey( GLFW_KEY_A ).State == KeyState::Down )
     {
-        currentKeyMovement |= engine::KeyboardAdapterSystem::MF_Left;
+        currentKeyMovement |= engine::KeyboardAndMouseAdapterSystem::MF_Left;
     }
     if( keyboard->GetKey( GLFW_KEY_S ).State == KeyState::Down )
     {
-        currentKeyMovement |= engine::KeyboardAdapterSystem::MF_Down;
+        currentKeyMovement |= engine::KeyboardAndMouseAdapterSystem::MF_Down;
     }
     if( keyboard->GetKey( GLFW_KEY_D ).State == KeyState::Down )
     {
-        currentKeyMovement |= engine::KeyboardAdapterSystem::MF_Right;
+        currentKeyMovement |= engine::KeyboardAndMouseAdapterSystem::MF_Right;
     }
     currentKeyMovement |= mCurrentMovement;
     auto center = mCamera->GetCenter();
-    center.x += 1000 * DeltaTime * ( ( ( currentKeyMovement & engine::KeyboardAdapterSystem::MF_Left ) ? -1 : 0 ) + ( ( currentKeyMovement & engine::KeyboardAdapterSystem::MF_Right ) ? 1 : 0 ) );
-    center.y += 1000 * DeltaTime * ( ( ( currentKeyMovement & engine::KeyboardAdapterSystem::MF_Up ) ? 1 : 0 ) + ( ( currentKeyMovement & engine::KeyboardAdapterSystem::MF_Down ) ? -1 : 0 ) );
+    center.x += 1000 * DeltaTime * ( ( ( currentKeyMovement & engine::KeyboardAndMouseAdapterSystem::MF_Left ) ? -1 : 0 ) + ( ( currentKeyMovement & engine::KeyboardAndMouseAdapterSystem::MF_Right ) ? 1 : 0 ) );
+    center.y += 1000 * DeltaTime * ( ( ( currentKeyMovement & engine::KeyboardAndMouseAdapterSystem::MF_Up ) ? 1 : 0 ) + ( ( currentKeyMovement & engine::KeyboardAndMouseAdapterSystem::MF_Down ) ? -1 : 0 ) );
     mCamera->SetCenter( center );
 }
 
@@ -76,19 +76,19 @@ void EditorCameraSystem::OnScreenMouseMove( ::ScreenMouseMoveEvent const& Evt )
     window->GetWindowSize( w, h );
     if( Evt.Pos.y < 100 )
     {
-        mCurrentMovement |= engine::KeyboardAdapterSystem::MF_Up;
+        mCurrentMovement |= engine::KeyboardAndMouseAdapterSystem::MF_Up;
     }
     if( Evt.Pos.x < 100 )
     {
-        mCurrentMovement |= engine::KeyboardAdapterSystem::MF_Left;
+        mCurrentMovement |= engine::KeyboardAndMouseAdapterSystem::MF_Left;
     }
     if( Evt.Pos.y > h - 150 )
     {
-        mCurrentMovement |= engine::KeyboardAdapterSystem::MF_Down;
+        mCurrentMovement |= engine::KeyboardAndMouseAdapterSystem::MF_Down;
     }
     if( Evt.Pos.x > w - 100 )
     {
-        mCurrentMovement |= engine::KeyboardAdapterSystem::MF_Right;
+        mCurrentMovement |= engine::KeyboardAndMouseAdapterSystem::MF_Right;
     }
 }
 

@@ -5,36 +5,37 @@
 #include "core/property_loader.h"
 #include "core/opt.h"
 #include "core/weapon.h"
-#include <boost/serialization/list.hpp>
+#include <boost/serialization/map.hpp>
 #include "platform/export.h"
 class InventoryComponent : public IInventoryComponent
 {
 public:
-    virtual ItemList_t const& GetItems()const;
-    virtual ItemList_t& GetItems();
-    virtual void AddItem( int32_t Id );
-    virtual void AddItem( std::unique_ptr<Item> item );
-    virtual void DropItem( int32_t Id );
+    virtual ItemMap_t const& GetItems()const;
+    virtual ItemMap_t& GetItems();
+    virtual Opt<Item> AddItem( int32_t Id );
+    virtual Opt<Item> AddItem( std::unique_ptr<Item> item );
+    virtual bool DropItem( int32_t Id );
     virtual Opt<Item> GetItem( int32_t Id );
-    virtual void DropItemType( ItemType::Type Type );
-    virtual void Update( double Seconds );
-    virtual Opt<Weapon> GetSelectedWeapon();
-    virtual void SetSelectedWeapon( int32_t Id );
+    virtual Opt<Item> GetSelectedItem( ItemType::Type type );
+    virtual Opt<Item> SetSelectedItem( ItemType::Type type, int32_t Id, bool force = false ) ;
     virtual void SetActorGUID( int32_t actorGUID );
-    virtual Opt<NormalItem> GetSelectedNormalItem();
-    virtual void SetSelectedNormalItem( int32_t Id );
+    virtual Opt<Item> SwitchToNextItem( ItemType::Type itemType, bool forward = true );
     virtual void SetPickupItems( bool pickupItems );
     virtual bool IsPickupItems() const;
+    virtual void SetDarkMatters( int32_t darkMatters );
+    virtual int32_t GetDarkMatters() const;
+    virtual void SetCollectDarkMatter( bool collectDarkMatter );
+    virtual bool IsCollectDarkMatter() const;
     virtual ~InventoryComponent();
 protected:
     InventoryComponent();
     friend class ComponentFactory;
 private:
     ItemFactory& mItemFactory;
-    ItemList_t mItems;
-    Opt<Weapon> mSelectedWeapon;
-    Opt<NormalItem> mSelectedNormalItem;
+    ItemMap_t mItems;
     bool mPickupItems;
+    int32_t mDarkMatters;
+    bool mCollectDarkMatter;
 public:
     friend class ::boost::serialization::access;
     template<class Archive>
@@ -47,9 +48,9 @@ void InventoryComponent::serialize( Archive& ar, const unsigned int version )
     //NOTE: generated archive for this class
     ar& boost::serialization::base_object<IInventoryComponent>( *this );
     ar& mItems;
-    ar& mSelectedWeapon;
-    ar& mSelectedNormalItem;
     ar& mPickupItems;
+    ar& mDarkMatters;
+    ar& mCollectDarkMatter;
 }
 
 class InventoryComponentLoader: public ComponentLoader<InventoryComponent>

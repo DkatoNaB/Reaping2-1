@@ -17,6 +17,8 @@ LightSystem::LightSystem()
 void LightSystem::Init()
 {
     mOnMapLoad = EventServer<core::MapLoadEvent>::Get().Subscribe( std::bind( &LightSystem::OnMapLoad, this, std::placeholders::_1 ) );
+    mOnActorEvent = EventServer<ActorEvent>::Get().Subscribe( std::bind( &LightSystem::OnActorEvent, this, std::placeholders::_1 ) );
+
     mScene.AddValidator( GetType_static(), []( Actor const& actor )->bool {
         return actor.Get<ILightComponent>().IsValid()
             && actor.Get<IPositionComponent>().IsValid(); } );
@@ -51,33 +53,36 @@ void LightSystem::Update(double DeltaTime)
         }
     }
 
-    mActiveDummyObjects.resize( std::max( mActiveDummyObjects.size(), activeLights.size() ) );
-    auto lightIt = activeLights.begin();
-    for( auto*& dummy : mActiveDummyObjects )
+    if (!ps.mIsClient)
     {
-        if( activeLights.end() == lightIt )
+        mActiveDummyObjects.resize( std::max( mActiveDummyObjects.size(), activeLights.size() ) );
+        auto lightIt = activeLights.begin();
+        for (auto*& dummy : mActiveDummyObjects)
         {
-            // drop dummmy
-            if( dummy != nullptr )
+            if (activeLights.end() == lightIt)
             {
-                mScene.RemoveActor( dummy->GetGUID() );
+                // drop dummmy
+                if (dummy != nullptr)
+                {
+                    mScene.RemoveActor( dummy->GetGUID() );
+                }
+                continue;
             }
-            continue;
+            if (dummy == nullptr&& !ps.mIsClient)
+            {
+                static ActorFactory& af( ActorFactory::Get() );
+                auto newDummy( af( AutoId( "light_active_dummy" ) ) );
+                dummy = newDummy.get();
+                mScene.AddActor( newDummy.release() );
+            }
+            auto light = *lightIt;
+            // TODO: attachable_component would solve this positioning i think.
+            dummy->Get<IPositionComponent>()->SetX( light->Get<IPositionComponent>()->GetX() );
+            dummy->Get<IPositionComponent>()->SetY( light->Get<IPositionComponent>()->GetY() );
+            ++lightIt;
         }
-        if( dummy == nullptr )
-        {
-            static ActorFactory& af( ActorFactory::Get() );
-            auto newDummy( af( AutoId( "light_active_dummy" ) ) );
-            dummy = newDummy.get();
-            mScene.AddActor( newDummy.release() );
-        }
-        auto light = *lightIt;
-        dummy->Get<IPositionComponent>()->SetX( light->Get<IPositionComponent>()->GetX() );
-        dummy->Get<IPositionComponent>()->SetY( light->Get<IPositionComponent>()->GetY() );
-        ++lightIt;
+        mActiveDummyObjects.resize( activeLights.size() );
     }
-
-    mActiveDummyObjects.resize( activeLights.size() );
     std::swap( activeLights, mActiveLights );
 }
 
@@ -162,6 +167,17 @@ glm::vec4 LightSystem::GetAmbientLight() const
 double LightSystem::GetMaxShadow() const
 {
     return mMaxShadow;
+}
+
+void LightSystem::OnActorEvent( ActorEvent const& Evt )
+{
+    if (Evt.mState == ActorEvent::Removed)
+    {
+        mActiveLights.erase( std::remove_if( mActiveLights.begin(), mActiveLights.end(), 
+            [&Evt]( auto * actor ) { return actor->GetGUID() == Evt.mActor->GetGUID(); } ), mActiveLights.end() );
+        mActiveDummyObjects.erase( std::remove_if( mActiveDummyObjects.begin(), mActiveDummyObjects.end(), 
+            [&Evt]( auto * actor ) { return actor->GetGUID() == Evt.mActor->GetGUID(); } ), mActiveDummyObjects.end() );
+    }
 }
 
 REGISTER_SYSTEM( LightSystem );

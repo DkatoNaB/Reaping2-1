@@ -56,6 +56,12 @@ Weapon::Weapon()
 
 }
 
+
+void Weapon::InitSumBullets( Limited<double> sumBullets )
+{
+    mSumBullets = sumBullets;
+}
+
 bool Weapon::IsShooting() const
 {
     return mShoot && mBullets >= mShotCost;
@@ -131,6 +137,17 @@ double Weapon::GetBulletsMax()const
     return mBulletsMax;
 }
 
+
+void Weapon::SetNextReloadBulletCount( double nextReloadBulletCount )
+{
+    mNextReloadBulletCount = nextReloadBulletCount;
+}
+
+double Weapon::GetNextReloadBulletCount() const
+{
+    return mNextReloadBulletCount;
+}
+
 void Weapon::SetShotCost( int32_t shotCost )
 {
     mShotCost = shotCost;
@@ -164,6 +181,27 @@ double Weapon::GetReloadTime()const
 void Weapon::SetReloadTimeMax( double reloadTimeMax )
 {
     mReloadTimeMax = reloadTimeMax;
+}
+
+
+void Weapon::Reload()
+{
+    auto const missingBullets = std::min( (mBulletsMax-mBullets ), mBulletsMax );
+    auto const increase = mSumBullets.GetMax()!=0.0?std::min( missingBullets, mSumBullets.Get() ):missingBullets;
+    mNextReloadBulletCount = increase + mBullets;
+    mSumBullets.Set( mSumBullets.Get() - increase );
+    mBullets = 0.0;
+    mReloadTime = mReloadTimeMax;
+}
+
+
+void Weapon::StaticReload()
+{
+    auto const missingBullets = std::min( (mBullets + mStaticReload), mBulletsMax ) - mBullets;
+    auto const increase = mSumBullets.GetMax() != 0.0 ? std::min(missingBullets, mSumBullets.Get()):missingBullets;
+    mBullets += increase;
+    mSumBullets.Set( mSumBullets.Get() - increase );
+    mReloadTime = mReloadTimeMax;
 }
 
 double Weapon::GetReloadTimeMax()const
@@ -249,6 +287,24 @@ int32_t Weapon::GetShotAltId() const
     return mShotAltId;
 }
 
+
+bool Weapon::CanSwitch() const
+{
+    return Item::CanSwitch();
+}
+
+
+void Weapon::Deselected()
+{
+    mShoot = false;
+    mShootAlt = false;
+}
+
+void Weapon::Selected()
+{
+    Item::Selected();
+}
+
 bool Weapon::GetShoot()
 {
     return mShoot;
@@ -284,11 +340,23 @@ bool Weapon::IsMouseResizable() const
     return mReloadTime <= 0.0 || mStaticReload != 0.0;
 }
 
+Limited<double>& Weapon::GetSumBullets()
+{
+    return mSumBullets;
+}
+
+
+Limited<double> const& Weapon::GetSumBullets() const
+{
+    return mSumBullets;
+}
+
 bool Weapon::CanReload() const
 {
     return mReloadTime <= 0.0
            && mBullets != mBulletsMax
-           && mStaticReload == 0.0;
+           && mStaticReload == 0.0
+           && (mSumBullets.GetMax()==0.0||mSumBullets.Get()>0.0);
 }
 
 void Weapon::SetScatter( Scatter scatter )
@@ -336,7 +404,7 @@ double Scatter::GetCalculated() const
 
 void WeaponLoader::BindValues()
 {
-    L1( "Bind Weapon values \n" );
+    L2( "Bind Weapon values \n" );
     Bind( "shoot_cooldown", func_double( &Weapon::SetShootCooldown ) );
     Bind( "shoot_alt_cooldown", func_double( &Weapon::SetShootAltCooldown ) );
     Bind( "bullets", func_double( &Weapon::SetBullets ) );
@@ -362,7 +430,7 @@ void WeaponLoader::BindValues()
     Json::GetDouble( ( *mSetters )["scatter_alt_increase"], scatter.mAltIncrease );
     Json::GetDouble( ( *mSetters )["scatter_chill"], scatter.mChill );
     Json::GetDouble( ( *mSetters )["scatter_magic_number"], scatter.mMagicNumber );
-    L1( "Scatter in: %f %f %f %f", scatter.mIncrease, scatter.mAltIncrease, scatter.mChill, scatter.mMagicNumber );
+    L2( "Scatter in: %f %f %f %f", scatter.mIncrease, scatter.mAltIncrease, scatter.mChill, scatter.mMagicNumber );
     Bind<Scatter>( &Weapon::SetScatter, scatter );
     if (Json::GetStr( (*mSetters)["shot"], istr ))
     {
@@ -372,6 +440,9 @@ void WeaponLoader::BindValues()
     {
         Bind<int32_t>( &Weapon::SetShotAltId, AutoId( istr ) );
     }
+    Limited<double> sumBullets;
+    sumBullets.Load( (*mSetters)["sum_bullets"] );
+    Bind<Limited<double>>(&Weapon::InitSumBullets, sumBullets);
 }
 
 WeaponLoader::WeaponLoader()

@@ -23,6 +23,8 @@ public:
     Trigger mUseReload;
     bool mMoving;
     Trigger mActivate;
+    Trigger mSwitchWeapon;
+    Trigger mSwitchNormalItem;
     PlayerControllerMessage()
         : mActorGUID( 0 )
         , mOrientation( 0 )
@@ -33,10 +35,13 @@ public:
         , mUseReload()
         , mMoving( false )
         , mActivate()
+        , mSwitchWeapon()
+        , mSwitchNormalItem()
     {
     }
     template<class Archive>
     void serialize( Archive& ar, const unsigned int version );
+    bool operator==( PlayerControllerMessage const& other );
 };
 
 template<class Archive>
@@ -52,6 +57,8 @@ void PlayerControllerMessage::serialize( Archive& ar, const unsigned int version
     ar& mUseReload;
     ar& mMoving;
     ar& mActivate;
+    ar& mSwitchWeapon;
+    ar& mSwitchNormalItem;
 }
 
 class PlayerControllerMessageHandlerSubSystem: public MessageHandlerSubSystem
@@ -63,13 +70,16 @@ public:
     virtual void Execute( Message const& message );
 };
 
-class PlayerControllerMessageSenderSystem: public MessageSenderSystem
+class PlayerControllerMessageSenderSystem: public ActorTimerMessageSenderSystem<PlayerControllerMessage>
 {
+    virtual void AddUniqueMessage( Actor& actor );
+    virtual void AddMandatoryMessage( Actor& actor );
 public:
     DEFINE_SYSTEM_BASE( PlayerControllerMessageSenderSystem )
     PlayerControllerMessageSenderSystem();
     virtual void Init();
     virtual void Update( double DeltaTime );
+    static std::auto_ptr<PlayerControllerMessage> GenerateMessage( Actor& actor );
 };
 
 } // namespace network

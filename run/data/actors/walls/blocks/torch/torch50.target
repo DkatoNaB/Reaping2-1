@@ -1,0 +1,12 @@
+[
+    {
+        "target_name":"wall_target",
+        "name":"torch50",
+        "setters":
+        {
+            "cursor_id": "torch50",
+            "actor_id": "torch50"
+        },
+        "type":"target_desc"
+    }
+]

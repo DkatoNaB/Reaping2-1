@@ -100,8 +100,6 @@
 #include "network/sync_item_message.h"
 #include "audio/audio_system.h"
 #include "input/input_system.h"
-#include "input/keyboard_adapter_system.h"
-#include "input/mouse_adapter_system.h"
 #include "soldier_auto_revive_system.h"
 #include "core/map/soldier_auto_revive_map_element_system.h"
 #include "network/secs_to_revive_message.h"
@@ -137,6 +135,15 @@
 #include "waypoint_system.h"
 #include "network/map_start_message.h"
 #include "network/map_load_message.h"
+#include "network/message_timer_system.h"
+#include "network/suppress_message.h"
+#include "input/keyboard_and_mouse_adapter_system.h"
+#include "network/waypoint_message.h"
+#include "network/waypoints_data_message.h"
+#include "attractor_system.h"
+#include "attractable_system.h"
+#include "network/dark_matter_message.h"
+#include "activatable_system.h"
 
 using platform::AutoId;
 namespace engine {
@@ -166,9 +173,8 @@ void SystemFactory::Init()
     Bind( AutoId( "keyboard_system" ), &CreateSystem<KeyboardSystem> );
     Bind( AutoId( "mouse_system" ), &CreateSystem<MouseSystem> );
     Bind( AutoId( "input_system" ), &CreateSystem<engine::InputSystem> );
-    Bind( AutoId( "keyboard_adapter_system" ), &CreateSystem<engine::KeyboardAdapterSystem> );
-    Bind( AutoId( "mouse_adapter_system" ), &CreateSystem<engine::MouseAdapterSystem> );
     Bind( AutoId( "controller_adapter_system" ), &CreateSystem<engine::ControllerAdapterSystem> );
+    Bind( AutoId( "keyboard_and_mouse_adapter_system" ), &CreateSystem<engine::KeyboardAndMouseAdapterSystem> );
 
     Bind( AutoId( "controller_system" ), &CreateSystem<ControllerSystem> );
     Bind( AutoId( "inventory_system" ), &CreateSystem<InventorySystem> );
@@ -239,7 +245,10 @@ void SystemFactory::Init()
     Bind( AutoId( "data_checksum_message_sender_system" ), &CreateSystem<network::DataChecksumMessageSenderSystem>);
     Bind( AutoId( "map_start_message_sender_system" ), &CreateSystem<network::MapStartMessageSenderSystem> );
     Bind( AutoId( "map_load_message_sender_system" ), &CreateSystem<network::MapLoadMessageSenderSystem> );
-
+    Bind( AutoId( "message_timer_system" ), &CreateSystem<network::MessageTimerSystem> );
+    Bind( AutoId( "suppress_message_sender_system" ), &CreateSystem<network::SuppressMessageSenderSystem> );
+    Bind( AutoId( "waypoint_message_sender_system" ), &CreateSystem<network::WaypointMessageSenderSystem> );
+    Bind( AutoId( "waypoints_data_message_sender_system" ), &CreateSystem<network::WaypointsDataMessageSenderSystem> );
 
     Bind( AutoId( "ctf_client_list_displaying_system" ), &CreateSystem<network::CtfClientListDisplayingSystem> );
     Bind( AutoId( "ctf_client_list_handling_system" ), &CreateSystem<network::CtfClientListHandlingSystem> );
@@ -276,6 +285,7 @@ void SystemFactory::Init()
     Bind( AutoId( "ctf_spawn_flags_map_element_system" ), &CreateSystem<map::ctf::CtfSpawnFlagsMapElementSystem> );
     Bind( AutoId( "flag_spawn_system" ), &CreateSystem<engine::ctf::FlagSpawnSystem> );
     Bind( AutoId( "ctf_score_message_sender_system" ), &CreateSystem<network::ctf::CtfScoreMessageSenderSystem> );
+    Bind( AutoId( "dark_matter_message_sender_system" ), &CreateSystem<network::DarkMatterMessageSenderSystem> );
 
     Bind( AutoId( "attachable_system" ), &CreateSystem<engine::ctf::AttachableSystem> );
     Bind( AutoId( "show_text_system" ), &CreateSystem<engine::ShowTextSystem> );
@@ -303,6 +313,10 @@ void SystemFactory::Init()
     Bind( AutoId( "player_model_system" ), &CreateSystem<engine::PlayerModelSystem> );
     Bind( AutoId( "level_end_system" ), &CreateSystem<engine::LevelEndSystem> );
     Bind( AutoId( "level_selection_system"), &CreateSystem<core::LevelSelectionSystem>);
+
+    Bind( AutoId( "attractor_system" ), &CreateSystem<engine::AttractorSystem> );
+    Bind( AutoId( "attractable_system" ), &CreateSystem<engine::AttractableSystem> );
+    Bind( AutoId( "activatable_system" ), &CreateSystem<engine::ActivatableSystem> ); 
 }
 
 REGISTER_INIT_PRIO( bbb, SystemFactory, boost::bind( &SystemFactory::Init, &SystemFactory::Get() ) )

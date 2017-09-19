@@ -20,6 +20,7 @@
 #include "client_list_changed_event.h"
 #include <portable_iarchive.hpp>
 #include <portable_oarchive.hpp>
+#include "waypoints_data_message.h"
 
 namespace network {
 
@@ -83,7 +84,7 @@ void SoldierPropertiesMessageHandlerSubSystem::Init()
 void SoldierPropertiesMessageHandlerSubSystem::Execute( Message const& message )
 {
     SoldierPropertiesMessage const& msg = static_cast<SoldierPropertiesMessage const&>( message );
-    L1( "executing soldierProperties from id: %d \n", msg.mSenderId );
+    L2( "executing soldierProperties from id: %d \n", msg.mSenderId );
 
     Opt<core::ClientData> clientData( mProgramState.FindClientDataByClientId( msg.mSenderId ) );
     if ( !clientData.IsValid() )
@@ -118,10 +119,15 @@ void SoldierPropertiesMessageHandlerSubSystem::Execute( Message const& message )
             lifecycleMsg->mClientId = clientData->mClientId;
             mMessageHolder.AddOutgoingMessage( std::auto_ptr<Message>( lifecycleMsg.release() ) );
 
-            std::auto_ptr<ActorListMessage> actorListMsg( new ActorListMessage );
+            std::auto_ptr<ActorListMessage> actorListMsg( new ActorListMessage( &Scene::Get().GetActors() ) );
             actorListMsg->mClientId = clientData->mClientId;
-            actorListMsg->mActorList = &Scene::Get().GetActors();
             mMessageHolder.AddOutgoingMessage( actorListMsg );
+
+            static auto waypointS( engine::Engine::Get().GetSystem<engine::WaypointSystem>() );
+            if (waypointS.IsValid())
+            {
+                mMessageHolder.AddOutgoingMessage( std::auto_ptr<WaypointsDataMessage>(new WaypointsDataMessage( &waypointS->GetWaypointsData(), clientData->mClientId ) ) );
+            }
         }
         else
         {

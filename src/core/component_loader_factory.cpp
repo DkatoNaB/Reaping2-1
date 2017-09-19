@@ -60,6 +60,10 @@
 #include "light_component.h"
 #include "activity_component.h"
 #include "waypoint_component.h"
+#include "dark_matter_collision_component.h"
+#include "attractable_component.h"
+#include "attractor_component.h"
+#include "activatable_component.h"
 
 ComponentLoaderFactory::ComponentLoaderFactory()
 {
@@ -92,6 +96,7 @@ ComponentLoaderFactory::ComponentLoaderFactory()
     Bind( AutoId( "aoe_collision_component" ), &CreateComponentLoader<AoeCollisionComponentLoader> );
     Bind( AutoId( "bounce_collision_component" ), &CreateComponentLoader<BounceCollisionComponentLoader> );
     Bind( AutoId( "flag_collision_component" ), &CreateComponentLoader<ctf::FlagCollisionComponentLoader> );
+    Bind( AutoId( "dark_matter_collision_component" ), &CreateComponentLoader<DarkMatterCollisionComponentLoader> );
 
     Bind( AutoId( "renderable_component" ), &CreateComponentLoader<RenderableComponentLoader> );
     Bind( AutoId( "border_component" ), &CreateComponentLoader<BorderComponentLoader> );
@@ -137,8 +142,11 @@ ComponentLoaderFactory::ComponentLoaderFactory()
     Bind( AutoId( "level_end_component" ), &CreateComponentLoader<LevelEndComponentLoader> );
 
 
-    Bind( AutoId("light_component"), &CreateComponentLoader<LightComponentLoader>);
-    Bind( AutoId("activity_component"), &CreateComponentLoader<ActivityComponentLoader>);
+    Bind( AutoId( "light_component" ), &CreateComponentLoader<LightComponentLoader> );
+    Bind( AutoId( "activity_component" ), &CreateComponentLoader<ActivityComponentLoader> );
+    Bind( AutoId( "attractable_component" ), &CreateComponentLoader<AttractableComponentLoader> );
+    Bind( AutoId( "attractor_component" ), &CreateComponentLoader<AttractorComponentLoader> );
+    Bind( AutoId( "activatable_component" ), &CreateComponentLoader<ActivatableComponentLoader> );
 }
 
 void DefaultComponentLoader::BindValues()

@@ -19,6 +19,8 @@
 #include "client_list_changed_event.h"
 #include "engine/connection_event.h"
 #include "data_checksum_message.h"
+#include "engine/waypoint_system.h"
+#include "waypoints_data_message.h"
 
 
 namespace network {
@@ -48,7 +50,7 @@ void MyNameMessageHandlerSubSystem::Init()
 void MyNameMessageHandlerSubSystem::Execute( Message const& message )
 {
     MyNameMessage const& msg = static_cast<MyNameMessage const&>( message );
-    L1( "executing myname: %s from current id: %d \n", msg.mName.c_str(), msg.mSenderId );
+    L2( "executing myname: %s from current id: %d \n", msg.mName.c_str(), msg.mSenderId );
 
 
 
@@ -92,15 +94,20 @@ void MyNameMessageHandlerSubSystem::Execute( Message const& message )
                 lifecycleMsg->mClientId = clientData->mClientId;
                 mMessageHolder.AddOutgoingMessage( std::auto_ptr<Message>( lifecycleMsg.release() ) );
 
-                std::auto_ptr<ActorListMessage> actorListMsg( new ActorListMessage );
+                std::auto_ptr<ActorListMessage> actorListMsg( new ActorListMessage( &Scene::Get().GetActors() ) );
                 actorListMsg->mClientId = clientData->mClientId;
-                actorListMsg->mActorList = &Scene::Get().GetActors();
                 mMessageHolder.AddOutgoingMessage( actorListMsg );
 
                 std::auto_ptr<SetOwnershipMessage> setOwnershipMsg( new SetOwnershipMessage );
                 setOwnershipMsg->mActorGUID = clientData->mClientActorGUID;
                 setOwnershipMsg->mClientId = clientData->mClientId;
                 mMessageHolder.AddOutgoingMessage( setOwnershipMsg );
+
+                static auto waypointS( engine::Engine::Get().GetSystem<engine::WaypointSystem>() );
+                if (waypointS.IsValid())
+                {
+                    mMessageHolder.AddOutgoingMessage( std::auto_ptr<WaypointsDataMessage>( new WaypointsDataMessage( &waypointS->GetWaypointsData(), clientData->mClientId ) ) );
+                }
             }
             else
             {

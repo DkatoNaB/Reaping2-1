@@ -18,12 +18,15 @@ public:
     bool mShootAlt;
     Trigger mUseNormalItem;
     Trigger mActivate;
+    Trigger mSwitchWeapon;
+    Trigger mSwitchNormalItem;
     bool mActive; //controlled by current client
     int32_t mControllerId; //controller client id
     Trigger mUseReload;
     bool mMoving;
-public:
-    friend class ::boost::serialization::access;
+    double mActivateRange; // this might be buffable later
+    int32_t mHighLightedGUID;
+    void SetActivateRange( double activateRange );
     template<class Archive>
     void serialize( Archive& ar, const unsigned int version );
 };
@@ -38,10 +41,15 @@ void PlayerControllerComponent::serialize( Archive& ar, const unsigned int versi
     ar& mShoot;
     ar& mShootAlt;
     ar& mUseNormalItem;
+    ar& mActivate;
+    ar& mSwitchWeapon;
+    ar& mSwitchNormalItem;
     ar& mActive;
     ar& mControllerId;
     ar& mUseReload;
     ar& mMoving;
+    ar& mActivateRange;
+    ar& mHighLightedGUID;
 }
 
 class PlayerControllerComponentLoader: public ComponentLoader<PlayerControllerComponent>

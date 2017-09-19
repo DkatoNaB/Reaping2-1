@@ -696,5 +696,10 @@ void RendererSystem::SetOverrideCamera( Camera* cam )
     mCamera = cam;
 }
 
+TextSceneRenderer& RendererSystem::GetTextSceneRenderer()
+{
+    return mTextSceneRenderer;
+}
+
 } // namespace engine
 

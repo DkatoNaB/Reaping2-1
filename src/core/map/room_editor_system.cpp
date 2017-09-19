@@ -14,7 +14,6 @@
 #include "ctf_flag_spawn_point_map_element.h"
 #include "core/i_renderable_component.h"
 #include "core/actor_factory.h"
-#include "input/keyboard_adapter_system.h"
 #include <boost/assign/std/vector.hpp>
 #include "level_generator/room_repo.h"
 #include "level_generator/level_generated_event.h"
@@ -36,6 +35,7 @@
 #include "level_generator/spawn_property.h"
 #include "property_editor.h"
 #include "editor_camera_system.h"
+#include "input/keyboard_and_mouse_adapter_system.h"
 #include <imgui.h>
 
 namespace map {

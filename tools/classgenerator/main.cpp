@@ -592,7 +592,7 @@ class MapElementGenerator : public Generator
             fprintf( file.mFile, "public:\n" );
             fprintf( file.mFile, "    DEFINE_MAP_ELEMENT_BASE(%sMapElement)\n", classCamelCase.c_str() );
             fprintf( file.mFile, "    %sMapElement( int32_t Id );\n", classCamelCase.c_str() );
-            fprintf( file.mFile, "    void Load( Json::Value& setters );\n" );
+            fprintf( file.mFile, "    void Load( Json::Value const& setters );\n" );
             for( Type_Member_Pairs_t::iterator i = typeMemberPairs.begin(), e = typeMemberPairs.end(); i != e; ++i )
             {
                 fprintf( file.mFile, "    %s;\n", CreateSetMemberFull( i->first, i->second ).c_str() );
@@ -632,7 +632,7 @@ class MapElementGenerator : public Generator
             fprintf( file.mFile, "{\n" );
             fprintf( file.mFile, "}\n" );
             fprintf( file.mFile, "\n" );
-            fprintf( file.mFile, "void %sMapElement::Load( Json::Value& setters )\n", classCamelCase.c_str() );
+            fprintf( file.mFile, "void %sMapElement::Load( Json::Value const& setters )\n", classCamelCase.c_str() );
             fprintf( file.mFile, "{\n" );
             fprintf( file.mFile, "    MapElement::Load( setters );\n" );
             fprintf( file.mFile, "}\n" );
@@ -813,20 +813,22 @@ class SystemGenerator : public Generator
                 fprintf( file.mFile, "    mOn%s=EventServer<%s::%sEvent>::Get().Subscribe( boost::bind( &%s::On%s, this, _1 ) );\n"
                          , VariableToCamelCase( i->second ).c_str(), i->first.c_str(), VariableToCamelCase( i->second ).c_str(), classCamelCase.c_str(), VariableToCamelCase( i->second ).c_str() );
             }
+            fprintf( file.mFile, "\n" );
+            fprintf( file.mFile, "    mScene.AddValidator( GetType_static(), []( Actor const& actor )->bool {\n" );
+            fprintf( file.mFile, "        return actor.Get<I%sComponent>().IsValid(); } );\n", targetCamelCase.c_str() );
             fprintf( file.mFile, "}\n" );
             fprintf( file.mFile, "\n" );
 
             fprintf( file.mFile, "\n" );
             fprintf( file.mFile, "void %s::Update(double DeltaTime)\n", classCamelCase.c_str() );
             fprintf( file.mFile, "{\n" );
-            fprintf( file.mFile, "    for( ActorList_t::iterator it = mScene.GetActors().begin(), e = mScene.GetActors().end(); it != e; ++it )\n" );
+            fprintf( file.mFile, "    for ( auto actor : mScene.GetActorsFromMap( GetType_static() ) )\n" );
             fprintf( file.mFile, "    {\n" );
-            fprintf( file.mFile, "       Actor& actor = **it;\n" );
-            fprintf( file.mFile, "       Opt<I%sComponent> %sC=actor.Get<I%sComponent>();\n", targetCamelCase.c_str(), targetVariableName.c_str(), targetCamelCase.c_str() );
-            fprintf( file.mFile, "       if (!%sC.IsValid())\n", targetVariableName.c_str() );
-            fprintf( file.mFile, "       {\n" );
-            fprintf( file.mFile, "           continue;\n" );
-            fprintf( file.mFile, "       }\n" );
+            fprintf( file.mFile, "        Opt<I%sComponent> %sC = actor->Get<I%sComponent>();\n", targetCamelCase.c_str(), targetVariableName.c_str(), targetCamelCase.c_str() );
+            fprintf( file.mFile, "        if (!%sC.IsValid())\n", targetVariableName.c_str() );
+            fprintf( file.mFile, "        {\n" );
+            fprintf( file.mFile, "            continue;\n" );
+            fprintf( file.mFile, "        }\n" );
             fprintf( file.mFile, "    }\n" );
             fprintf( file.mFile, "}\n" );
             fprintf( file.mFile, "\n" );
@@ -2652,7 +2654,7 @@ class WeaponGenerator : public Generator
             fprintf(file.mFile, "void %s::Update(Actor& actor, double DeltaTime)\n", classCamelCase.c_str());
             fprintf(file.mFile, "{\n");
             fprintf(file.mFile, "    Opt<IInventoryComponent> inventoryC = actor.Get<IInventoryComponent>();\n");
-            fprintf(file.mFile, "    Opt<%s> weapon = inventoryC->GetSelectedWeapon();\n", originalClassCamelCase.c_str());
+            fprintf(file.mFile, "    Opt<%s> weapon = inventoryC->GetSelectedItem( ItemType::Weapon );\n", originalClassCamelCase.c_str());
             fprintf(file.mFile, "    if (weapon->GetCooldown() > 0)\n");
             fprintf(file.mFile, "    {\n");
             fprintf(file.mFile, "        return;\n");

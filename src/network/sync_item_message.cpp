@@ -53,10 +53,9 @@ void SyncItemMessageHandlerSubSystem::Execute( Message const& message )
     Opt<Actor> actor = mScene.GetActor( msg.mActorGUID );
     if( !actor.IsValid() )
     {
-        BOOST_ASSERT( false );
         return;
     }
-    L1( "executing %s: actorGUID %d \n", __FUNCTION__, msg.mActorGUID );
+    L2( "executing %s: actorGUID %d \n", __FUNCTION__, msg.mActorGUID );
     Opt<IInventoryComponent> inv = actor->Get<IInventoryComponent>();
     if( !inv.IsValid() )
     {
@@ -69,16 +68,12 @@ void SyncItemMessageHandlerSubSystem::Execute( Message const& message )
     ia >> item;
     ItemType::Type itemType = item->GetType();
     int32_t itemId = item->GetId();
-    inv->AddItem( std::unique_ptr<Item>( item.Get() ) );
-    if ( itemType == ItemType::Normal )
+    inv->AddItem( std::move(std::unique_ptr<Item>( item.Get() )) );
+    if ( itemType == ItemType::Normal
+        || itemType == ItemType::Weapon)
     {
-        inv->SetSelectedNormalItem( itemId );
+        inv->SetSelectedItem( itemType, itemId, true );
     }
-    else if ( itemType == ItemType::Weapon )
-    {
-        inv->SetSelectedWeapon( itemId );
-    }
-
 }
 
 } // namespace network

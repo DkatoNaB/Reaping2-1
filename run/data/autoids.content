@@ -21,6 +21,8 @@
 #redidx
 #redidx.add
 #spawnptidx
+#waypointidx
+#waypointidx.add
 %%black_background
 %%idle
 %%player
@@ -82,9 +84,12 @@
 %ping
 %player.buffs
 %player.buffs#buffs
+%player.dark_matters
 %player.hp
 %player.max_hp
 %player.special
+%player.sum_bullets
+%player.sum_bullets_max
 %player.weapon
 %programstate.isclient
 %programstate.ishost
@@ -108,6 +113,8 @@
 %spawn.props
 %spawn.props#propidx
 %spawn.target
+%waypoint.names
+%waypoint.names#waypointidx
 +
 -
 -a1
@@ -115,6 +122,7 @@
 -a4
 0x00000000
 0x00000044
+0x000000aa
 0x00007777
 0x0000aa
 0x00aa00
@@ -127,6 +135,7 @@
 0x660000
 0x77000077
 0x777777
+0x8206b0
 0x888888cc
 0xFFE600
 0xFFFFFF
@@ -166,12 +175,15 @@
 :/textures/water_topleft_outer_border_mask.png
 :/textures/water_topright_outer_border_mask.png
 =
+@param1|ffa
+@param2|level1
 ACCUR:
 AccuracyBuff
 Actor
 Any
 ArmorBuff
 Away
+Bullets:
 CELL COUNT:
 CELL SIZE:
 CTF
@@ -196,7 +208,6 @@ HealOverTimeBuff
 Host
 K:
 Kill
-Level 1
 Level 2
 Level 3
 Level 4
@@ -245,6 +256,7 @@ Waiting for Host...
 Zap_Beat
 _save_weapon_rocket_launcher
 _worm200_head
+a
 a0
 a1
 a10
@@ -395,10 +407,13 @@ accuracy_buff
 accuracy_component
 accuracy_pickup
 accuracy_pickup.png
+activatable
+activatable_component
 activity_component
 actor
 actors
 actors/misc/font/font.png
+actors_spawned
 add
 add to existing group
 add to new group
@@ -422,6 +437,8 @@ armor_pickup
 armor_pickup.png
 arrow
 attachable_component
+attractable_component
+attractor_component
 audible_component
 auto_revive_text
 autoids
@@ -696,6 +713,7 @@ brush
 buff
 buff_background
 buff_holder_component
+buffs_brown
 bug_move
 bug_rip
 buildings
@@ -789,6 +807,16 @@ ctf_soldier_spawn_target
 ctf_spawn_flags
 ctf_spawn_soldiers
 current
+d
+dark_matter
+dark_matter.png
+dark_matter_back
+dark_matter_back1
+dark_matter_collision_component
+dark_matter_particle1
+dark_matter_particle2
+dark_matter_particle3
+dark_matter_particle4
 death
 decal
 decals
@@ -796,13 +824,17 @@ default
 default_action
 description
 desert
-desk100
-desk100.png
+desk80
+desk80_left
+desk80_left.png
+desk80_right
+desk80_right.png
 detonate_on_hit_component
 diamond
 distance_to_aggressor
 distance_to_players
 distance_to_target
+dm:
 do_nothing
 dragon_postprocess
 dragon_stone
@@ -822,6 +854,7 @@ dragon_stone_mask
 dragon_stone_normal
 drop_on_death_component
 dummy
+e
 e1
 editor.brush
 editor.brush.style
@@ -899,10 +932,12 @@ entrance
 entrance target:
 entrance.png
 erase layer
+escape
 example_1
 explode_on_death_component
 explode_on_hit_component
 explosion_component
+f
 fade_out_component
 ffa
 ffa_client_list
@@ -911,8 +946,6 @@ ffa_client_list.clients#clientidx
 fill
 fire
 fire.png
-fire60
-fire60.png
 fire_flame_particle
 fire_particle
 fire_particle.png
@@ -1003,6 +1036,7 @@ gauss_gun_projectile
 gauss_gun_projectile.png
 gauss_particle
 gauss_secondary
+generate
 generator
 glow
 grafics_test
@@ -1128,6 +1162,8 @@ level.images#levelidx
 level.names
 level.names#levelidx
 level.select
+level.select_by_name
+level1
 level_generated
 level_generator
 lifecycle.host
@@ -1138,6 +1174,7 @@ lightmap
 lights
 link
 listen_child_death_component
+lit
 local.start
 lucky_particle
 lucky_rocket
@@ -1157,6 +1194,8 @@ lucky_rocket_projectile.png
 map_elements
 map_start
 mapitem
+mb1
+mb2
 menu item
 mergelights
 monkey
@@ -1691,9 +1730,12 @@ platform_normal
 player
 player.buffs
 player.buffs#buffs
+player.dark_matters
 player.hp
 player.max_hp
 player.special
+player.sum_bullets
+player.sum_bullets_max
 player.weapon
 player_body_base
 player_body_base.png
@@ -1716,11 +1758,14 @@ positioning
 postprocessor_select
 pow
 pow_projectile
+pre_actors_spawned
 programstate.isclient
 programstate.ishost
 projectile
 pulse_component
 purple_flowers50
+q
+r
 random
 read_me
 readme
@@ -1732,6 +1777,7 @@ reaping_resurr_splash.png
 reaping_welcome
 recognizer_desc
 recognizers_excludes
+recreate
 recreate_borders
 red
 remove
@@ -1767,10 +1813,12 @@ rocket_launcher_target_explosion_projectile
 rocket_smoke
 rogue
 rogue1x1
+rogue1x1noend
 rogue1x1nostart
 rogue1x1straight
 rogue1x3
 rogue2x2
+rogue2x2shop
 rogue2x2wallstone
 rogue3x3a
 rogue3x3b
@@ -2185,6 +2233,7 @@ select
 select_game_mode
 select_level
 select_target
+select_waypoint
 set entrance
 settings
 shadow_unwrap
@@ -2193,6 +2242,7 @@ shadows2
 shooter_Loves
 shooter_move
 shooter_rip
+shop_pickup
 shopkeeper
 shopkeeper.png
 shot_collision_component
@@ -2274,6 +2324,7 @@ sounds/plasma.ogg
 sounds/plasma_secondary.ogg
 sounds/rocket.ogg
 sounds/shotgun.ogg
+space
 spawn
 spawn point
 spawn.chance
@@ -2373,6 +2424,7 @@ stones50
 stop_on_death_component
 strongerAmmo
 sunlight
+tab
 target
 target:
 target_desc
@@ -2384,6 +2436,7 @@ test_simple_room
 test_vert
 text_scene
 text_widget
+thread.sleep
 tile_water
 todo
 top
@@ -2391,6 +2444,8 @@ top_entrance
 topcasters
 topleft
 topright
+torch50
+torch50.png
 trap_spike_off
 trap_spike_on
 tree100
@@ -2437,6 +2492,7 @@ visual_box_multiplier_component
 vortex
 vortex_anim
 vortex_rip
+w
 w1
 w2
 w3
@@ -2465,6 +2521,9 @@ water_top_outer_mask
 water_topleft_outer_border
 water_topleft_outer_mask
 water_topright_outer_mask
+waypoint.names
+waypoint.names#waypointidx
+waypoint.select
 waypoint_component
 waypoint_off
 waypoint_off.png
@@ -2472,12 +2531,15 @@ waypoint_off_mask
 waypoint_off_normal
 waypoint_off_normal.png
 waypoint_on
+waypoint_on.png
 waypoint_on_mask
 waypoint_on_normal
+waypoint_on_normal.png
 weapon
 weapon_pickup
 weapon_rotation
 weapon_size
+weapons_brown
 webber_move
 webber_rip
 webber_rip1

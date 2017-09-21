@@ -22,10 +22,6 @@ void EditorActorSystem::Init()
 
 void EditorActorSystem::Update(double DeltaTime)
 {
-    if (!mEnabled)
-    {
-        return;
-    }
     static Opt<engine::KeyboardSystem> keyboard = ::engine::Engine::Get().GetSystem<engine::KeyboardSystem>();
     if (keyboard->GetKey( GLFW_KEY_SPACE ).State == KeyState::Typed)
     {
@@ -61,7 +57,7 @@ void EditorActorSystem::OnEditorModeChanged(map::EditorModeChangedEvent const& E
 
 void EditorActorSystem::OnEditorBack( map::EditorBackEvent const& Evt )
 {
-    if (mEnabled)
+    if (IsEnabled())
     {
         if (!Evt.mBackToBaseHud)
         {

@@ -32,7 +32,7 @@ void SoldierSpawnSystem::Update( double DeltaTime )
 
 void SoldierSpawnSystem::OnRevive( core::ReviveEvent const& Evt )
 {
-    if ( mEnabled )
+    if ( IsEnabled() )
     {
         std::auto_ptr<Actor> player( Spawn( *Evt.mClientData ) );
         mScene.AddActor( player.release() );

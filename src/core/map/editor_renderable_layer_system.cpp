@@ -36,10 +36,6 @@ void EditorRenderableLayerSystem::Init()
 
 void EditorRenderableLayerSystem::Update(double DeltaTime)
 {
-    if (!mEnabled)
-    {
-        return;
-    }
     static Opt<engine::KeyboardSystem> keyboard = ::engine::Engine::Get().GetSystem<engine::KeyboardSystem>();
     static Opt<engine::MouseSystem> mouse = ::engine::Engine::Get().GetSystem<MouseSystem>();
 }

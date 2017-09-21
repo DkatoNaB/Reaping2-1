@@ -33,10 +33,6 @@ void EditorGroupSystem::Init()
 
 void EditorGroupSystem::Update(double DeltaTime)
 {
-    if (!mEnabled)
-    {
-        return;
-    }
     static Opt<engine::KeyboardSystem> keyboard = ::engine::Engine::Get().GetSystem<engine::KeyboardSystem>();
     static Opt<engine::MouseSystem> mouse = ::engine::Engine::Get().GetSystem<MouseSystem>();
 }
@@ -178,7 +174,7 @@ void EditorGroupSystem::SetMapElementIdentifier( int32_t mapElementUID, int32_t 
 
 void EditorGroupSystem::OnMapElementRemoved( map::MapElementRemovedEvent const& Evt )
 {
-    if (!mEnabled)
+    if (!IsEnabled())
     {
         return;
     }

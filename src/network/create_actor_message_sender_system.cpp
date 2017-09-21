@@ -33,7 +33,7 @@ void CreateActorMessageSenderSystem::Update( double DeltaTime )
 
 void CreateActorMessageSenderSystem::OnActorEvent( ActorEvent const& Evt )
 {
-    if (!mEnabled)
+    if (!IsEnabled())
     {
         return;
     }

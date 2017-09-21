@@ -82,7 +82,7 @@ RegistryImpl::~RegistryImpl()
     // static dtor kb random ordere miatt ez meg kemenyen be fog jonni.
     // el ko viselni, meg idovel javitani
     // eddig is fos volt, csak most mar van ra assert
-    BOOST_ASSERT( mRegistrations.empty() );
+    // BOOST_ASSERT( mRegistrations.empty() );
 }
 
 RegistryImpl::RegistryImpl( Registry& owner )

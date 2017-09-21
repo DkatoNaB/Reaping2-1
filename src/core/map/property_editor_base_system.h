@@ -67,7 +67,7 @@ void PropertyEditorBaseSystem<EDITOR, PROPERTY>::Init()
 template<typename EDITOR, typename PROPERTY>
 void map::PropertyEditorBaseSystem<EDITOR, PROPERTY>::HandleEditorBack( map::EditorBackEvent const& Evt )
 {
-    if (mEnabled)
+    if (IsEnabled())
     {
         if (!Evt.mBackToBaseHud)
         {

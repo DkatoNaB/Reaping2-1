@@ -78,6 +78,7 @@ void RoomEditorSystem::Init()
             }
         }
     }
+    engine::Engine::Get().SetEnabled<RoomEditorSystem>(false);
 }
 
 void RoomEditorSystem::RemoveCells()
@@ -138,6 +139,7 @@ void RoomEditorSystem::Start()
     ::engine::Engine::Get().SetEnabled< ::engine::ControllerSystem>( false );
     ::engine::Engine::Get().SetEnabled< ::engine::CollisionSystem>( false );
     ::engine::Engine::Get().SetEnabled< EditorSystem>( false );
+    ::engine::Engine::Get().SetEnabled< EditorTargetSystem>( false );
     ::engine::Engine::Get().SetEnabled< RoomEditorSystem>( true );
     RespawnActorMapElementSystem::Get()->SetRespawnOnDeath( false ); //to be able to delete target actors
     EditorTargetSystem::Get()->SetNextUID( AutoId( "spawn_at_level_generated" ) );
@@ -281,7 +283,7 @@ void RoomEditorSystem::Save()
 
 void RoomEditorSystem::OnKeyEvent( const KeyEvent& Event )
 {
-    if (!mEnabled)
+    if (!IsEnabled())
     {
         return;
     }
@@ -360,7 +362,7 @@ void RoomEditorSystem::NewRoom()
 
 void RoomEditorSystem::OnMouseClickEvent( const WorldMouseReleaseEvent& Event )
 {
-    if( !mEnabled )
+    if( !IsEnabled() )
     {
         return;
     }

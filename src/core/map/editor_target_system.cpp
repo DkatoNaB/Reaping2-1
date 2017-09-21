@@ -142,6 +142,7 @@ void EditorTargetSystem::Init()
     mTargetActorIdsMap["buff"] = mBuffActorIds;
     mTargetActorIdsMap["item"] = mItemActorIds;
 
+    engine::Engine::Get().SetEnabled<EditorTargetSystem>(false);
 }
 
 void EditorTargetSystem::Update( double DeltaTime )
@@ -164,7 +165,7 @@ void EditorTargetSystem::Update( double DeltaTime )
     updatePos( mCursorGuid );
     updatePos( mActiveCursorGuid );
 
-    if (!mEnabled)
+    if (!IsEnabled())
     {
         return;
     }
@@ -376,7 +377,7 @@ void EditorTargetSystem::AddCursor()
 
 void EditorTargetSystem::OnMouseClickEvent( const WorldMouseReleaseEvent& Event )
 {
-    if( !mEnabled )
+    if( !IsEnabled() )
     {
         return;
     }
@@ -429,7 +430,7 @@ void EditorTargetSystem::OnWorldMouseMoveEvent( ::WorldMouseMoveEvent const& Evt
 
 void EditorTargetSystem::OnKeyEvent( const KeyEvent& Event )
 {
-    if (!mEnabled)
+    if (!IsEnabled())
     {
         return;
     }

@@ -28,7 +28,7 @@ void CtfSoldierSpawnSystem::Update( double DeltaTime )
 
 void CtfSoldierSpawnSystem::OnRevive( core::ReviveEvent const& Evt )
 {
-    if ( mEnabled )
+    if ( IsEnabled() )
     {
         Opt< ::ctf::ClientData> ctfClientData( ::ctf::ProgramState::Get().FindClientDataByClientId( Evt.mClientData->mClientId ) );
         if ( ctfClientData.IsValid() )

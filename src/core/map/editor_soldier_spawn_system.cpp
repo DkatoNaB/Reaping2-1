@@ -75,7 +75,7 @@ void EditorSoldierSpawnSystem::OnLevelGenerated( LevelGeneratedEvent const& Evt 
 
 void EditorSoldierSpawnSystem::SpawnPlayers()
 {
-    if (mEnabled)
+    if (IsEnabled())
     {
         for (Opt<ctf::CtfSoldierSpawnPointMapElement> ctfSoldierSpawnPointMapElement : MapElementListFilter<MapSystem::All>( MapSystem::Get()->GetMapElementList(), ctf::CtfSoldierSpawnPointMapElement::GetType_static() ))
         {

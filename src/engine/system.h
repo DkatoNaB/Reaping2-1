@@ -44,17 +44,23 @@ RegisterSystem() \
 }
 
 namespace engine {
-
+class Engine;
+class SystemEnableModifier;
+class SystemFactory;
 class System
 {
+    friend class Engine;
+    friend class SystemEnableModifier;
+    friend class SystemFactory;
 public:
     virtual int32_t GetType() const = 0;
     virtual void Init() = 0;
     virtual void Update( double DeltaTime ) = 0;
-    virtual void SetEnabled ( bool enabled );
     virtual bool IsEnabled() const;
     virtual ~System();
 protected:
+    virtual void SetEnabled ( bool enabled );
+private:
     bool mEnabled;
 };
 

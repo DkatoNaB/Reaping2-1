@@ -91,11 +91,13 @@ void EditorSystem::Init()
             }
         }
     }
+    // disabled by default
+    engine::Engine::Get().SetEnabled<EditorSystem>(false);
 }
 
 void EditorSystem::OnEditorBack( map::EditorBackEvent const& Evt )
 {
-    if (mEnabled)
+    if (IsEnabled())
     {
         if (Evt.mBackToBaseHud)
         {
@@ -295,7 +297,7 @@ void EditorSystem::Save()
 
 void EditorSystem::OnKeyEvent( const KeyEvent& Event )
 {
-    if (!mEnabled)
+    if (!IsEnabled())
     {
         return;
     }
